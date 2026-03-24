@@ -1,0 +1,12 @@
+-- BACKEND -- 
+
+- DB:
+    - seed data
+- Controllers:
+        - CRUD za svaki entitet + testiraj endpointove
+        - 
+- EF Core Fluent API konfiguracija (*)
+
+
+-- FRONTEND -- 
+sve brt
