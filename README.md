@@ -3,7 +3,7 @@
 FON: Mikroservisna arhitektura projekat
 Implementacija na osnovu zahteva sa termina predavanja.
 
-Develpment stack:
+Development stack:
 
 Backend:
     ASP.NET - Kreiranje API-ja, autentifikacija, autorizacija
@@ -11,5 +11,7 @@ Backend:
 
 Frontend:
     React
+
+
 
 
