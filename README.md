@@ -1,2 +1,4 @@
 # mikroservisna-projekat
-projekat mikroservisnaaaa
+
+FON: Mikroservisna arhitektura projekat
+Implementacija na osnovu zahteva.
