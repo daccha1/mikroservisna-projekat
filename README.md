@@ -13,9 +13,9 @@ Frontend:
     React
 
 
-<<<<<<< HEAD
 
 
-=======
+
+
 <img width="803" height="643" alt="DijagramKlasa drawio" src="https://github.com/user-attachments/assets/eab6e2f7-47c8-4dac-9e07-3fcd015858f5" />
->>>>>>> 57702d79afc0e72becd4fdf311184070ce51c76b
+
