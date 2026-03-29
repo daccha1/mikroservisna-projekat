@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace mikroservisnaApp.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial_Db_Creation : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -117,7 +117,6 @@ namespace mikroservisnaApp.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     RasporedPredavanja = table.Column<DateTime>(type: "datetime2", nullable: false),
                     PredavacId = table.Column<int>(type: "int", nullable: false),
-                    StrucniDogadajId = table.Column<int>(type: "int", nullable: false),
                     StrucniDogadjajId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>

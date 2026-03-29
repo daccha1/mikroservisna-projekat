@@ -8,7 +8,7 @@ namespace mikroservisnaApp.Models
         public int Id { get; set; }
         public DateTime RasporedPredavanja { get; set; }
         public int PredavacId { get; set; }
-        public int StrucniDogadajId { get; set; }
+        public int StrucniDogadjajId { get; set; }
 
 
         // navigation

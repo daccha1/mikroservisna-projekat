@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using mikroservisnaApp.Data;
 
@@ -11,9 +12,11 @@ using mikroservisnaApp.Data;
 namespace mikroservisnaApp.Migrations
 {
     [DbContext(typeof(DogadjajiDbContext))]
-    partial class DogadjajiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260329171752_Initial-Create")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -46,36 +49,6 @@ namespace mikroservisnaApp.Migrations
                     b.HasIndex("StrucniDogadjajId");
 
                     b.ToTable("Dogadjaj_Predavac");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            PredavacId = 1,
-                            RasporedPredavanja = new DateTime(2025, 9, 15, 10, 0, 0, 0, DateTimeKind.Unspecified),
-                            StrucniDogadjajId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            PredavacId = 4,
-                            RasporedPredavanja = new DateTime(2025, 9, 15, 13, 0, 0, 0, DateTimeKind.Unspecified),
-                            StrucniDogadjajId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            PredavacId = 2,
-                            RasporedPredavanja = new DateTime(2025, 10, 5, 9, 0, 0, 0, DateTimeKind.Unspecified),
-                            StrucniDogadjajId = 2
-                        },
-                        new
-                        {
-                            Id = 4,
-                            PredavacId = 3,
-                            RasporedPredavanja = new DateTime(2025, 11, 20, 11, 0, 0, 0, DateTimeKind.Unspecified),
-                            StrucniDogadjajId = 3
-                        });
                 });
 
             modelBuilder.Entity("mikroservisnaApp.Models.Lokacija", b =>
@@ -100,29 +73,6 @@ namespace mikroservisnaApp.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Lokacija");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Adresa = "Veljka Dugoševića 54, Beograd",
-                            Kapacitet = 300,
-                            Naziv = "Tehnološki park Beograd"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Adresa = "Bulevar Oslobođenja 12, Novi Sad",
-                            Kapacitet = 150,
-                            Naziv = "Novi Sad IT Hub"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Adresa = "Nemanjina 4, Beograd",
-                            Kapacitet = 80,
-                            Naziv = "Smart City Centar"
-                        });
                 });
 
             modelBuilder.Entity("mikroservisnaApp.Models.Organizator", b =>
@@ -144,26 +94,6 @@ namespace mikroservisnaApp.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Organizator");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Ime = "Marko",
-                            Prezime = "Nikolić"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Ime = "Ana",
-                            Prezime = "Jovanović"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Ime = "Stefan",
-                            Prezime = "Petrović"
-                        });
                 });
 
             modelBuilder.Entity("mikroservisnaApp.Models.Predavac", b =>
@@ -201,48 +131,6 @@ namespace mikroservisnaApp.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Predavac");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Email = "nikola.djordjevic@gmail.com",
-                            Ime = "Nikola",
-                            OblastStrucnosti = "Veštačka inteligencija",
-                            Password = "hashed_pass_1",
-                            Prezime = "Đorđević",
-                            Titula = "Dr."
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Email = "jelena.stojanovic@gmail.com",
-                            Ime = "Jelena",
-                            OblastStrucnosti = "Web razvoj",
-                            Password = "hashed_pass_2",
-                            Prezime = "Stojanović",
-                            Titula = "Prof."
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Email = "milan.vasic@gmail.com",
-                            Ime = "Milan",
-                            OblastStrucnosti = "Baze podataka",
-                            Password = "hashed_pass_3",
-                            Prezime = "Vasić",
-                            Titula = "Mr."
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Email = "ivana.lukic@gmail.com",
-                            Ime = "Ivana",
-                            OblastStrucnosti = "Kibernetička bezbednost",
-                            Password = "hashed_pass_4",
-                            Prezime = "Lukić",
-                            Titula = "Dr."
-                        });
                 });
 
             modelBuilder.Entity("mikroservisnaApp.Models.StrucniDogadjaj", b =>
@@ -288,44 +176,6 @@ namespace mikroservisnaApp.Migrations
                     b.HasIndex("TipId");
 
                     b.ToTable("Dogadjaj");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Agenda = "Panel diskusije o primeni AI u industriji, radionice, networking",
-                            Cena = 4999.9899999999998,
-                            DatumVreme = new DateTime(2025, 9, 15, 10, 0, 0, 0, DateTimeKind.Unspecified),
-                            LokacijaId = 1,
-                            Naziv = "AI Summit Srbija 2025",
-                            OrganizatorId = 1,
-                            TipId = 1,
-                            Trajanje = 480
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Agenda = "React, Next.js, moderne prakse u web razvoju",
-                            Cena = 2499.9899999999998,
-                            DatumVreme = new DateTime(2025, 10, 5, 9, 0, 0, 0, DateTimeKind.Unspecified),
-                            LokacijaId = 2,
-                            Naziv = "Web Dev Radionica",
-                            OrganizatorId = 2,
-                            TipId = 2,
-                            Trajanje = 240
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Agenda = "Query optimizacija, indeksiranje, NoSQL vs SQL",
-                            Cena = 1999.99,
-                            DatumVreme = new DateTime(2025, 11, 20, 11, 0, 0, 0, DateTimeKind.Unspecified),
-                            LokacijaId = 3,
-                            Naziv = "Baze Podataka — napredne tehnike",
-                            OrganizatorId = 3,
-                            TipId = 3,
-                            Trajanje = 180
-                        });
                 });
 
             modelBuilder.Entity("mikroservisnaApp.Models.TipDogadjaja", b =>
@@ -343,28 +193,6 @@ namespace mikroservisnaApp.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TipDogadjaja");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Naziv = "Konferencija"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Naziv = "Radionica"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Naziv = "Seminar"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Naziv = "Webinar"
-                        });
                 });
 
             modelBuilder.Entity("mikroservisnaApp.Models.DogadjajPredavac", b =>
