@@ -14,8 +14,13 @@ namespace mikroservisnaApp
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddSqlServer<DogadjajiDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
+			
 			builder.Services.AddScoped<IStrucniDogadjaj, StrucniDogadjajSQLRepository>();
 			builder.Services.AddScoped<ILokacija, LokacijaSQLRepository>();
+			builder.Services.AddScoped<IDogadjajPredavac, DogadjajPredavacSQLRepository>();
+			builder.Services.AddScoped<IOrganizator, OrganizatorSQLRepository>();
+			builder.Services.AddScoped<IPredavac, PredavacSQLRepository>();
+			builder.Services.AddScoped<ITipDogadjaja, TipDogadjajaSQLRepository>();
 
 			builder.Services.AddControllers();
 
