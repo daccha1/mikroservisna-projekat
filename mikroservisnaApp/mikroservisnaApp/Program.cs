@@ -15,6 +15,7 @@ namespace mikroservisnaApp
 
             builder.Services.AddSqlServer<DogadjajiDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
 			builder.Services.AddScoped<IStrucniDogadjaj, StrucniDogadjajSQLRepository>();
+			builder.Services.AddScoped<ILokacija, LokacijaSQLRepository>();
 
 			builder.Services.AddControllers();
 
