@@ -98,6 +98,8 @@ namespace mikroservisnaApp.Data
 				new DogadjajPredavac { Id = 3, StrucniDogadjajId = 2, PredavacId = 2, RasporedPredavanja = new DateTime(2025, 10, 5, 9, 0, 0) },
 				new DogadjajPredavac { Id = 4, StrucniDogadjajId = 3, PredavacId = 3, RasporedPredavanja = new DateTime(2025, 11, 20, 11, 0, 0) }
 			);
+
+
 		}
 		#endregion
 

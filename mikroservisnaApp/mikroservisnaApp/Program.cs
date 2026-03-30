@@ -3,6 +3,7 @@ using Microsoft.OpenApi;
 using mikroservisnaApp.Contracts;
 using mikroservisnaApp.Data;
 using mikroservisnaApp.Repositories.SQL_Server;
+using System.Text.Json.Serialization;
 
 namespace mikroservisnaApp
 {
@@ -14,7 +15,9 @@ namespace mikroservisnaApp
 
             builder.Services.AddSqlServer<DogadjajiDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
 			builder.Services.AddScoped<IStrucniDogadjaj, StrucniDogadjajSQLRepository>();
+
 			builder.Services.AddControllers();
+
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen(c =>
 			{

@@ -1,15 +1,16 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using mikroservisnaApp.Models;
+using mikroservisnaApp.Models.DTO.StrucniDogadjajDTO;
 
 namespace mikroservisnaApp.Contracts
 {
 	public interface IStrucniDogadjaj
 	{
-		public Task<List<StrucniDogadjaj>> GetAll();
-		public Task<StrucniDogadjaj> GetById(int idEvent);
-		public Task<StrucniDogadjaj> Add(StrucniDogadjaj dogadjaj);
-		public Task<bool> Remove(int idEvent);
-		public Task<bool> Update(int idEvent, StrucniDogadjaj updatedEvent);
+		public Task<List<StrucniDogadajajResponseDTO>> GetAll();
+		public Task<StrucniDogadjajDetailsResponseDTO> GetById(int idEvent);
+		public Task<StrucniDogadjajRequestDTO> Post(StrucniDogadjajRequestDTO dogadjaj);
+		//public Task<bool> Remove(int idEvent);
+		public Task<bool> Update(int idEvent, StrucniDogadjajRequestDTO updatedEvent);
 
 	}
 }
