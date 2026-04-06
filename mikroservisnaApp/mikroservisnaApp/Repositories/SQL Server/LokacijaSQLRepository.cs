@@ -3,20 +3,25 @@ using mikroservisnaApp.Contracts;
 using mikroservisnaApp.Data;
 using mikroservisnaApp.Models;
 using mikroservisnaApp.Models.DTO.LokacijaDTO;
+using mikroservisnaApp.Patterns;
 using Polly;
 using System.Diagnostics;
+using System.Net;
+using System.Reflection.Metadata.Ecma335;
 
 namespace mikroservisnaApp.Repositories.SQL_Server
 {
 	public class LokacijaSQLRepository : ILokacija
 	{
-		private DogadjajiDbContext context;
-		private IHttpClientFactory HttpFactory { get; }
+		private DogadjajiDbContext _context;
+		private IHttpClientFactory _HttpFactory { get; }
+		private CircuitBreaker _breaker;
 
-		public LokacijaSQLRepository(DogadjajiDbContext context, IHttpClientFactory clientFactory)
+		public LokacijaSQLRepository(DogadjajiDbContext context, IHttpClientFactory clientFactory, CircuitBreaker cb)
 		{
-			this.context = context;
-			HttpFactory = clientFactory;
+			this._context = context;
+			_HttpFactory = clientFactory;
+			_breaker = cb;
 		}
 
 		//public async Task<List<LokacijaResponseDTO>> GetAll()
@@ -51,7 +56,7 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 							  });
 
 			HttpResponseMessage httpResponse = null;
-			var client = HttpFactory.CreateClient("LokacijaAPI");
+			var client = _HttpFactory.CreateClient("LokacijaAPI");
 
 			httpResponse = await retryPolicy.ExecuteAsync<HttpResponseMessage>( async () =>
 			{
@@ -71,14 +76,41 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 
 			HttpResponseMessage httpResponse = null;
 
-			var client = HttpFactory.CreateClient("LokacijaAPI");
-			httpResponse = await client.GetAsync($"/lokacija/{idLocation}");
+			var retryPolicy = Polly.Policy
+							  .Handle<HttpRequestException>()
+							  .Or<TaskCanceledException>()
+							  .WaitAndRetryAsync(2, retry =>
+							  {
+								  Debug.WriteLine($"\n>>>>>>>>> Current retry: {retry}");
+								  return TimeSpan.FromSeconds(1);
+							  });
 
-			if (httpResponse == null || !httpResponse.IsSuccessStatusCode)
+
+			var client = _HttpFactory.CreateClient("LokacijaAPI");
+
+			httpResponse = await retryPolicy.ExecuteAsync<HttpResponseMessage>(async () =>
 			{
-				return new LokacijaResponseDTO();
-			}
+				try
+				{
+					return await _breaker.ExecuteAsync<HttpResponseMessage>(async () =>
+							{
+								var result = await client.GetAsync($"/lokacija/{idLocation}");
+								result.EnsureSuccessStatusCode();
+								return result;
+							});
+				}
+				catch (Exception ex)
+				{
+					Debug.WriteLine("Servis zaduzen za LOKACIJE trenutno nije dostupan");
+					return null;
+				}
+			});
 
+			if(httpResponse == null)
+			{
+				return null;
+			}
+			
 			LokacijaResponseDTO lokacija = await httpResponse.Content.ReadFromJsonAsync<LokacijaResponseDTO>();
 
 			return lokacija;
@@ -93,8 +125,8 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 				Naziv = location.Naziv
 			};
 
-			context.Lokacije.Add(lokacija);
-			int isAdded = context.SaveChanges();
+			_context.Lokacije.Add(lokacija);
+			int isAdded = _context.SaveChanges();
 			if(isAdded != 0)
 			{
 				return location;
@@ -104,7 +136,7 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 
 		public async Task<bool> Update(int idLocation, LokacijaRequestDTO updatedLocation)
 		{
-			var location = await context.Lokacije.Where(l => l.Id == idLocation).FirstOrDefaultAsync();
+			var location = await _context.Lokacije.Where(l => l.Id == idLocation).FirstOrDefaultAsync();
 
 			if(location == null)
 			{
@@ -115,7 +147,7 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 			location.Adresa = updatedLocation.Adresa;
 			location.Kapacitet = updatedLocation.Kapacitet;
 
-			context.SaveChanges();
+			_context.SaveChanges();
 			return true;
 
 		}

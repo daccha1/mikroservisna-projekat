@@ -42,7 +42,7 @@
 		{
 			if (State == CircuitBreakerState.Open)
 			{
-				throw new CircuitBreakerOpenException("CircuitBreaker Open Exception");
+				throw new CircuitBreakerOpenException("CircuitBreaker Open!");
 			}
 
 			try
@@ -61,7 +61,7 @@
 			{
 				lock (_lock)
 				{
-					_failuireCount++;
+					_failuireCount += 2;
 					_lastFailiureTime = DateTime.UtcNow;
 
 					if (_state == CircuitBreakerState.HalfOpen)

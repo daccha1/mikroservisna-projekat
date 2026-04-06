@@ -17,7 +17,7 @@ namespace mikroservisnaApp
             builder.Services.AddSqlServer<DogadjajiDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
 
 			builder.Services.AddSingleton<CircuitBreaker>(sp =>
-				new CircuitBreaker(3, TimeSpan.FromSeconds(10))
+				new CircuitBreaker(1, TimeSpan.FromSeconds(7))
 			);
 
 			builder.Services.AddHttpClient("OrganizatorAPI", (client) =>
