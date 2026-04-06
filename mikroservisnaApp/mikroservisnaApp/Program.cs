@@ -2,6 +2,7 @@
 using Microsoft.OpenApi;
 using mikroservisnaApp.Contracts;
 using mikroservisnaApp.Data;
+using mikroservisnaApp.Patterns;
 using mikroservisnaApp.Repositories.SQL_Server;
 using System.Text.Json.Serialization;
 
@@ -13,10 +14,11 @@ namespace mikroservisnaApp
         {
             var builder = WebApplication.CreateBuilder(args);
 
-
-
             builder.Services.AddSqlServer<DogadjajiDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
 
+			builder.Services.AddSingleton<CircuitBreaker>(sp =>
+				new CircuitBreaker(3, TimeSpan.FromSeconds(10))
+			);
 
 			builder.Services.AddHttpClient("OrganizatorAPI", (client) =>
 			{

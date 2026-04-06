@@ -23,7 +23,7 @@ namespace OrganizatorAPI.Controllers
             {
                 return NotFound();
             }
-			//await Task.Delay(7000); -> testiranje client timeouta na glavnom projektu
+			//await Task.Delay(7000); //-> testiranje client timeouta na glavnom projektu
 			return Ok(result);
         }
 

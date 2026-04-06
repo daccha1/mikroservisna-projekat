@@ -3,6 +3,8 @@ using mikroservisnaApp.Contracts;
 using mikroservisnaApp.Data;
 using mikroservisnaApp.Models;
 using mikroservisnaApp.Models.DTO.LokacijaDTO;
+using Polly;
+using System.Diagnostics;
 
 namespace mikroservisnaApp.Repositories.SQL_Server
 {
@@ -38,51 +40,38 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 
 		public async Task<List<LokacijaResponseDTO>> GetAll()
 		{
-			HttpResponseMessage httpResponse = null;
 
+			var retryPolicy = Polly.Policy
+							  .Handle<HttpRequestException>() // http error
+							  .Or<TaskCanceledException>()    // timeout
+							  .WaitAndRetryAsync(2, retry =>
+							  {
+								  Debug.Write($">>>>>>> Current retry: {retry}");
+								  return TimeSpan.FromSeconds(1);
+							  });
+
+			HttpResponseMessage httpResponse = null;
 			var client = HttpFactory.CreateClient("LokacijaAPI");
 
-			httpResponse = await client.GetAsync("/lokacija");
-
-			if(httpResponse == null || !httpResponse.IsSuccessStatusCode)
+			httpResponse = await retryPolicy.ExecuteAsync<HttpResponseMessage>( async () =>
 			{
-				return new List<LokacijaResponseDTO>();
-			}
+				var results = await client.GetAsync("/lokacija");
+				results.EnsureSuccessStatusCode();
+				return results;
+			});
 
 			List<LokacijaResponseDTO>? lokacije = await httpResponse.Content.ReadFromJsonAsync<List<LokacijaResponseDTO>>();
 			
 			return lokacije;
-
 		}
 
 
 		public async Task<LokacijaResponseDTO> GetById(int idLocation)
 		{
-			//var location = await context.Lokacije
-			//					.Include(l => l.ListaDogadjaja)
-			//					.Where(l => l.Id == idLocation)
-			//					.FirstOrDefaultAsync();
-
-			//if(location == null)
-			//{
-			//	return null;
-			//}
-
-			//LokacijaResponseDTO dto = new()
-			//{
-			//	Id = location.Id,
-			//	Adresa = location.Adresa,
-			//	Kapacitet = location.Kapacitet,
-			//	Naziv = location.Naziv,
-			//	SpisakDogadjaja = location?.ListaDogadjaja?.Select(d => $"{d.Naziv}").ToList()
-			//};
-
-			//return dto;
 
 			HttpResponseMessage httpResponse = null;
 
 			var client = HttpFactory.CreateClient("LokacijaAPI");
-
 			httpResponse = await client.GetAsync($"/lokacija/{idLocation}");
 
 			if (httpResponse == null || !httpResponse.IsSuccessStatusCode)

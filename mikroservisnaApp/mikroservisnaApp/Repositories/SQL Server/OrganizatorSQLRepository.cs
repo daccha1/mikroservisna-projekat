@@ -3,6 +3,8 @@ using mikroservisnaApp.Contracts;
 using mikroservisnaApp.Data;
 using mikroservisnaApp.Models;
 using mikroservisnaApp.Models.DTO.OrganizatorDTO;
+using Polly;
+using System.Diagnostics;
 
 namespace mikroservisnaApp.Repositories.SQL_Server
 {
@@ -18,27 +20,33 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 
 		public async Task<List<OrganizatorResponseDTO>> GetAll()
 		{
-			//var organizatori = await context.Organizatori.Select(o => new OrganizatorResponseDTO
-			//{
-			//	Id = o.Id,
-			//	Ime = o.Ime,
-			//	Prezime = o.Prezime,
-			//	ListaDogadjaja = o.ListaDogadjaja.Select(d => d.Naziv).ToList()
-			//}).ToListAsync();
+			// HttpRequestException : tip exceptiona koji baca HttpClient
+			var policyHandler = Polly.Policy
+								.Handle<HttpRequestException>()
+								.Or<TaskCanceledException>()
+								.WaitAndRetryAsync(2, retry => 
+								{
+									Debug.WriteLine($">>>>>>>>>>>>   Current retry: {retry}");
+									Console.Beep(); // obrisi ovo posle 
+									return TimeSpan.FromSeconds(1);
+								});
+			// policy koji hendluje bacene HttpRequestException-e tako da na svaki ex tog tipa koji je neuspesan vrsi
+			// do navedenog broja retry-a, a izmedju svakog retry ceka 2s
+			// (ako predje navedeni broj retry-a baca exception dalje)
 
-			//return organizatori;
+			// testirano na timeout i kada je ugasen server (radi)
 
-			HttpResponseMessage httpResposne = null;
+			HttpResponseMessage httpResponse = null;
 			var client = HttpFactory.CreateClient("OrganizatorAPI");
 			
-			httpResposne = await client.GetAsync("/organizator");
-
-			if(httpResposne == null || !httpResposne.IsSuccessStatusCode)
+			httpResponse = await policyHandler.ExecuteAsync<HttpResponseMessage>(async () =>
 			{
-				return new List<OrganizatorResponseDTO>();
-			}
+				httpResponse = await client.GetAsync("/organizator");
+				httpResponse.EnsureSuccessStatusCode(); // ukoliko nije Success status code baca ex.
+				return httpResponse;
+			});
 
-			var listaOrganizatora = await httpResposne.Content.ReadFromJsonAsync<List<OrganizatorResponseDTO>>();
+			var listaOrganizatora = await httpResponse.Content.ReadFromJsonAsync<List<OrganizatorResponseDTO>>();
 			
 			return listaOrganizatora;
 		}
