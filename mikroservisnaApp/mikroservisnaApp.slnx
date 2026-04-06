@@ -1,3 +1,6 @@
 <Solution>
+  <Project Path="Common/Common.csproj" Id="0d0df27f-ef2d-46f9-a11d-9c0dfa74d06a" />
   <Project Path="mikroservisnaApp/mikroservisnaApp.csproj" />
+  <Project Path="LokacijaAPI/LokacijaAPI.csproj" Id="115e6fb0-fd1f-4e58-b410-d1463551f487" />
+  <Project Path="OrganizatorAPI\OrganizatorAPI.csproj" />
 </Solution>

@@ -1,4 +1,4 @@
-﻿using mikroservisnaApp.Models.DTO.StrucniDogadjajDTO;
+﻿
 
 namespace mikroservisnaApp.Models.DTO.LokacijaDTO
 {

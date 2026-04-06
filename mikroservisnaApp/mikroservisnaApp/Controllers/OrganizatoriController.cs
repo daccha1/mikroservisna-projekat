@@ -23,6 +23,7 @@ namespace mikroservisnaApp.Controllers
 			{
 				return NotFound("Nema organizatora.");
 			}
+			
 			return Ok(organizatori);
 		}
 

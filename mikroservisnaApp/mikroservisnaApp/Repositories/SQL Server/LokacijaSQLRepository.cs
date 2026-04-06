@@ -9,53 +9,90 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 	public class LokacijaSQLRepository : ILokacija
 	{
 		private DogadjajiDbContext context;
+		private IHttpClientFactory HttpFactory { get; }
 
-		public LokacijaSQLRepository(DogadjajiDbContext context)
+		public LokacijaSQLRepository(DogadjajiDbContext context, IHttpClientFactory clientFactory)
 		{
 			this.context = context;
+			HttpFactory = clientFactory;
 		}
+
+		//public async Task<List<LokacijaResponseDTO>> GetAll()
+		//{
+		//	var locations = await context.Lokacije.Select(l => new LokacijaResponseDTO
+		//	{
+		//		Id = l.Id,
+		//		Naziv = l.Naziv,
+		//		Adresa = l.Adresa,
+		//		Kapacitet = l.Kapacitet,
+		//		SpisakDogadjaja = l.ListaDogadjaja.Select(d => $"{d.Naziv}").ToList()
+		//	}).ToListAsync();
+
+		//	if(locations == null)
+		//	{
+		//		return null;
+		//	}
+
+		//	return locations;
+		//}
 
 		public async Task<List<LokacijaResponseDTO>> GetAll()
 		{
-			var locations = await context.Lokacije.Select(l => new LokacijaResponseDTO
-			{
-				Id = l.Id,
-				Naziv = l.Naziv,
-				Adresa = l.Adresa,
-				Kapacitet = l.Kapacitet,
-				SpisakDogadjaja = l.ListaDogadjaja.Select(d => $"{d.Naziv}").ToList()
-			}).ToListAsync();
+			HttpResponseMessage httpResponse = null;
 
-			if(locations == null)
+			var client = HttpFactory.CreateClient("LokacijaAPI");
+
+			httpResponse = await client.GetAsync("/lokacija");
+
+			if(httpResponse == null || !httpResponse.IsSuccessStatusCode)
 			{
-				return null;
+				return new List<LokacijaResponseDTO>();
 			}
 
-			return locations;
+			List<LokacijaResponseDTO>? lokacije = await httpResponse.Content.ReadFromJsonAsync<List<LokacijaResponseDTO>>();
+			
+			return lokacije;
+
 		}
+
 
 		public async Task<LokacijaResponseDTO> GetById(int idLocation)
 		{
-			var location = await context.Lokacije
-								.Include(l => l.ListaDogadjaja)
-								.Where(l => l.Id == idLocation)
-								.FirstOrDefaultAsync();
+			//var location = await context.Lokacije
+			//					.Include(l => l.ListaDogadjaja)
+			//					.Where(l => l.Id == idLocation)
+			//					.FirstOrDefaultAsync();
 
-			if(location == null)
+			//if(location == null)
+			//{
+			//	return null;
+			//}
+
+			//LokacijaResponseDTO dto = new()
+			//{
+			//	Id = location.Id,
+			//	Adresa = location.Adresa,
+			//	Kapacitet = location.Kapacitet,
+			//	Naziv = location.Naziv,
+			//	SpisakDogadjaja = location?.ListaDogadjaja?.Select(d => $"{d.Naziv}").ToList()
+			//};
+
+			//return dto;
+
+			HttpResponseMessage httpResponse = null;
+
+			var client = HttpFactory.CreateClient("LokacijaAPI");
+
+			httpResponse = await client.GetAsync($"/lokacija/{idLocation}");
+
+			if (httpResponse == null || !httpResponse.IsSuccessStatusCode)
 			{
-				return null;
+				return new LokacijaResponseDTO();
 			}
 
-			LokacijaResponseDTO dto = new()
-			{
-				Id = location.Id,
-				Adresa = location.Adresa,
-				Kapacitet = location.Kapacitet,
-				Naziv = location.Naziv,
-				SpisakDogadjaja = location?.ListaDogadjaja?.Select(d => $"{d.Naziv}").ToList()
-			};
+			LokacijaResponseDTO lokacija = await httpResponse.Content.ReadFromJsonAsync<LokacijaResponseDTO>();
 
-			return dto;
+			return lokacija;
 		}
 
 		public async Task<LokacijaRequestDTO> Post(LokacijaRequestDTO location)
