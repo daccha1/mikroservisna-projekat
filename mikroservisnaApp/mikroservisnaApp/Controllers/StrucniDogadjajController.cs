@@ -5,8 +5,10 @@ using mikroservisnaApp.Contracts;
 using mikroservisnaApp.Models;
 using mikroservisnaApp.Models.DTO;
 using mikroservisnaApp.Models.DTO.StrucniDogadjajDTO;
+using mikroservisnaApp.MQ_Container;
 using mikroservisnaApp.Repositories.SQL_Server;
 using Swashbuckle.AspNetCore.Annotations;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace mikroservisnaApp.Controllers
@@ -16,8 +18,10 @@ namespace mikroservisnaApp.Controllers
 	public class StrucniDogadjajController : ControllerBase
 	{
 		private IStrucniDogadjaj _repository;
-		public StrucniDogadjajController(IStrucniDogadjaj repository)
+		private IMQPublisher _mqPublisher;
+		public StrucniDogadjajController(IStrucniDogadjaj repository, IMQPublisher mqPublisher)
 		{
+			_mqPublisher = mqPublisher;
 			_repository = repository;
 		}
 
@@ -53,6 +57,8 @@ namespace mikroservisnaApp.Controllers
 			{
 				return NotFound("Nije uspelo dodavanje dogadjaja.");
 			}
+			string jsonBody = JsonSerializer.Serialize<StrucniDogadjajRequestDTO>(addEvent);
+			await _mqPublisher.SendMessage(jsonBody);
 			return Ok(newEvent);
 		}
 

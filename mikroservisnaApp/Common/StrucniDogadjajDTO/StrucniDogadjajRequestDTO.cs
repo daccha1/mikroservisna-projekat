@@ -1,8 +1,17 @@
-﻿using mikroservisnaApp.Models.DTO.DogadjajPredavacDTO;
-using mikroservisnaApp.Models.DTO.PredavacDTO;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
-namespace mikroservisnaApp.Models.DTO.StrucniDogadjajDTO
+namespace Common.StrucniDogadjajDTO
 {
+
+	public class PostPredavacRequestDTO
+	{
+		public DateTime RasporedPredavanja { get; set; }
+		public int PredavacId { get; set; }
+
+	}
+
 	public class StrucniDogadjajRequestDTO
 	{
 		public string Naziv { get; set; }
@@ -15,6 +24,12 @@ namespace mikroservisnaApp.Models.DTO.StrucniDogadjajDTO
 		public int TipId { get; set; }
 		public int OrganizatorId { get; set; }
 		public List<PostPredavacRequestDTO> Predavaci { get; set; }
+
+		public override string ToString()
+		{
+			return $"Naziv: {Naziv}, Trajanje: {Trajanje}, Cena: {Cena}";
+		}
+
 
 	}
 }

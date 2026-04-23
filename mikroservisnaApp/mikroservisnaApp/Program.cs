@@ -2,6 +2,7 @@
 using Microsoft.OpenApi;
 using mikroservisnaApp.Contracts;
 using mikroservisnaApp.Data;
+using mikroservisnaApp.MQ_Container;
 using mikroservisnaApp.Patterns;
 using mikroservisnaApp.Repositories.SQL_Server;
 using System.Text.Json.Serialization;
@@ -15,6 +16,8 @@ namespace mikroservisnaApp
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddSqlServer<DogadjajiDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+			builder.Services.AddSingleton<IMQPublisher, MQPublisher>();
 
 			builder.Services.AddSingleton<CircuitBreaker>(sp =>
 				new CircuitBreaker(1, TimeSpan.FromSeconds(7))
@@ -31,6 +34,7 @@ namespace mikroservisnaApp
 				client.Timeout = TimeSpan.FromSeconds(5); // ne dobije se odgovor kroz 5 sekundi -> baca ex
 				client.BaseAddress = new Uri(builder.Configuration["LokacijaAPI"]);
 			});
+
 
 			builder.Services.AddScoped<IStrucniDogadjaj, StrucniDogadjajSQLRepository>();
 			builder.Services.AddScoped<ILokacija, LokacijaSQLRepository>();

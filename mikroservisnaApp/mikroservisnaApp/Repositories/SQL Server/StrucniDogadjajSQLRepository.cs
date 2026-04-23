@@ -96,11 +96,11 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 			//														     vratiti gresku
 			// (slucaj da administrator sam unosi id-eve u tekst polja)
 
-			bool validationResult = await validateEvent(dogadjaj);
-			if (!validationResult)
-			{
-				return null; // kontroler da proveri null
-			}
+			//bool validationResult = await validateEvent(dogadjaj);
+			//if (!validationResult)
+			//{
+			//	return null; // kontroler da proveri null
+			//}
 			
 			StrucniDogadjaj eventToAdd = new()
 			{
