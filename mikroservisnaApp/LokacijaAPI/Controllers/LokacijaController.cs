@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using mikroservisnaApp.Models.DTO.LokacijaDTO;
 using ProductsAPI.Contracts;
+using ProductsAPI.Models;
 
 namespace ProductsAPI.Controllers
 {
@@ -36,6 +37,29 @@ namespace ProductsAPI.Controllers
 			}
 			return Ok(lokacija);
 		}
+
+		[HttpDelete("/{id}")]
+		public async Task<ActionResult> Delete(int id)
+		{
+			var lokacija = await _repository.Delete(id);
+			if(lokacija == null)
+			{
+				return NotFound();
+			}
+			return Ok();
+		}
+
+		[HttpPut("{id}")]
+		public async Task<IActionResult> Update(int id, [FromBody] LokacijaRequestDTO updatedLokacija)
+		{
+			var isSuccessful = await _repository.Update(id, updatedLokacija);
+			if(!isSuccessful)
+			{
+				return NotFound();
+			}
+			return Ok("Updated sucessfully!");
+		}
+
 
 	}
 }

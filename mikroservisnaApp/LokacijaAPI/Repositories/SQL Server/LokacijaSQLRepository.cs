@@ -15,6 +15,12 @@ namespace ProductsAPI.Repositories
 			this.context = context;
 		}
 
+		public async Task<bool> Delete(int id)
+		{
+			bool a = true;
+			return a;
+		}
+
 		public async Task<List<LokacijaResponseDTO>> GetAll()
 		{
 			var locations = await context.Lokacije.Select(l => new LokacijaResponseDTO
@@ -56,9 +62,20 @@ namespace ProductsAPI.Repositories
 			return Task.FromResult<LokacijaRequestDTO>(null);
 		}
 
-		public Task<bool> Update(int idLocation, LokacijaRequestDTO updatedLocation)
+		public async Task<bool> Update(int idLocation, LokacijaRequestDTO updatedLocation)
 		{
-			return Task.FromResult(false);
+			var lokacija = await context.Lokacije.Where(l => l.Id == idLocation).FirstOrDefaultAsync();
+			if(lokacija == null)
+			{
+				return false;
+			}
+			lokacija.Kapacitet = updatedLocation.Kapacitet;
+			lokacija.Adresa = updatedLocation.Adresa;
+			lokacija.Naziv = updatedLocation.Naziv;
+			
+			await context.SaveChangesAsync();
+			return true;
+
 		}
 	}
 }
