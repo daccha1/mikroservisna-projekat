@@ -5,6 +5,7 @@ using mikroservisnaApp.Contracts;
 using mikroservisnaApp.Data;
 using mikroservisnaApp.Models;
 using mikroservisnaApp.Models.DTO.StrucniDogadjajDTO;
+using mikroservisnaApp.MQ_Container;
 using System.ComponentModel;
 
 namespace mikroservisnaApp.Repositories.SQL_Server
@@ -13,10 +14,11 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 	{
 
 		private DogadjajiDbContext context;
-
-		public StrucniDogadjajSQLRepository(DogadjajiDbContext context)
+		private IMQPublisher _mqPublisher;
+		public StrucniDogadjajSQLRepository(DogadjajiDbContext context, IMQPublisher mqPublisher)
 		{
 			this.context = context;
+			this._mqPublisher = mqPublisher;
 		}
 
 		public async Task<List<StrucniDogadajajResponseDTO>> GetAll()
@@ -102,6 +104,9 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 			//	return null; // kontroler da proveri null
 			//}
 			
+			// dogadjaj -> extract lokacija & organizator IDs -> MQ ka LocationAPI & 
+
+
 			StrucniDogadjaj eventToAdd = new()
 			{
 				Agenda = dogadjaj.Agenda,
@@ -119,8 +124,8 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 				}).ToList()
 			};
 
-			var isAdded = context.Dogadjaji.Add(eventToAdd);
-			int successful = context.SaveChanges();
+			var isAdded = await context.Dogadjaji.AddAsync(eventToAdd);
+			int successful = await context.SaveChangesAsync();
 			if(successful != 0)
 			{
 				return dogadjaj;

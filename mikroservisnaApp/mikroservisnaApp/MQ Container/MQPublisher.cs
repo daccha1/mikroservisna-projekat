@@ -17,9 +17,20 @@ namespace mikroservisnaApp.MQ_Container
 		IConnection? connection;
 		IChannel? publishChannel;
 
-		// exhange, queue
-		string exchangeName = "events.event.eventsExchange";
-		string queueName = "events.event.publishQueue";
+		// email
+		string emailExchangeName = "events.event.eventsExchange";
+		string emailQueueName = "events.event.publishQueue";
+		string emailRoutingKey = "event-publish-key";
+
+		// location
+		string locationExchangeName = "events.location.locationExchange";
+		string locationQueueName = "events.location.locationQueue";
+		string locationRoutingKey = "location-publish-key";
+
+		// organizator
+		string organizatorExchangeName = "events.organizer.organizerExchange";
+		string organizatorQueueName = "events.organizer.organizerQueue";
+		string organizatorRoutingKey = "organizer-publish-key";
 
 		public async Task SendMessage(string jsonBody)
 		{
@@ -42,7 +53,7 @@ namespace mikroservisnaApp.MQ_Container
 
 
 				await publishChannel.BasicPublishAsync(
-						exchange: exchangeName,
+						exchange: emailExchangeName,
 						routingKey: "event-publish-key",
 						body: byteBody,
 						basicProperties: properties,
@@ -74,23 +85,67 @@ namespace mikroservisnaApp.MQ_Container
 			connection = await factory.CreateConnectionAsync();
 			publishChannel = await connection.CreateChannelAsync();
 
+			#region emailExchange
 			await publishChannel.ExchangeDeclareAsync(
-					exchange: exchangeName,
+					exchange: emailExchangeName,
 					type: ExchangeType.Direct,
 					durable: false,
 					autoDelete: false
 				);
 			await publishChannel.QueueDeclareAsync(
-					queue: queueName,
+					queue: emailQueueName,
 					durable:false,
 					exclusive:false,
 					autoDelete:false
 				);
 			await publishChannel.QueueBindAsync(
-					queue: queueName,
-					exchange: exchangeName,
-					routingKey: "event-publish-key"
+					queue: emailQueueName,
+					exchange: emailExchangeName,
+					routingKey: emailRoutingKey
 				);
+			#endregion
+
+			#region locationExchange
+			await publishChannel.ExchangeDeclareAsync(
+					exchange: locationExchangeName,
+					type: ExchangeType.Direct,
+					durable: false,
+					autoDelete: false
+				);
+			await publishChannel.QueueDeclareAsync(
+					queue: locationQueueName,
+					durable: false,
+					exclusive: false,
+					autoDelete: false
+				);
+			await publishChannel.QueueBindAsync(
+					queue: locationQueueName,
+					exchange: locationExchangeName,
+					routingKey: "location-publish-key"
+				);
+			#endregion
+
+			#region organizerExchange
+			await publishChannel.ExchangeDeclareAsync(
+					exchange: organizatorExchangeName,
+					type: ExchangeType.Direct,
+					durable: false,
+					autoDelete: false
+				);
+			await publishChannel.QueueDeclareAsync(
+					queue: organizatorQueueName,
+					durable: false,
+					exclusive: false,
+					autoDelete: false
+				);
+			await publishChannel.QueueBindAsync(
+					queue: organizatorQueueName,
+					exchange: organizatorExchangeName,
+					routingKey: organizatorRoutingKey
+				);
+			#endregion
+
+
 
 		}
 
