@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Common.StrucniDogadjajDTO;
+using Microsoft.AspNetCore.Mvc;
 using mikroservisnaApp.Models;
 using mikroservisnaApp.Models.DTO.StrucniDogadjajDTO;
 

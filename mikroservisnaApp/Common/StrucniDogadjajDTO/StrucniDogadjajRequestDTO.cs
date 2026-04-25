@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace Common.StrucniDogadjajDTO
 {
 
-	public class PostPredavacRequestDTO
+    public class PostPredavacRequestDTO
 	{
 		public DateTime RasporedPredavanja { get; set; }
 		public int PredavacId { get; set; }
@@ -23,6 +24,8 @@ namespace Common.StrucniDogadjajDTO
 		public int LokacijaId { get; set; }
 		public int TipId { get; set; }
 		public int OrganizatorId { get; set; }
+		
+
 		public List<PostPredavacRequestDTO> Predavaci { get; set; }
 
 		public override string ToString()

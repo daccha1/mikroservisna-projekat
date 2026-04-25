@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using mikroservisnaApp.Data;
 
@@ -11,9 +12,11 @@ using mikroservisnaApp.Data;
 namespace mikroservisnaApp.Migrations
 {
     [DbContext(typeof(DogadjajiDbContext))]
-    partial class DogadjajiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260425232404_Added_Outbox_Table_WithPK")]
+    partial class Added_Outbox_Table_WithPK
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

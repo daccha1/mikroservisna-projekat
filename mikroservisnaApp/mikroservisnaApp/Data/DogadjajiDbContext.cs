@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Common;
+using Common.StrucniDogadjajDTO;
+using Microsoft.EntityFrameworkCore;
 using mikroservisnaApp.Models;
 
 namespace mikroservisnaApp.Data
@@ -16,13 +18,17 @@ namespace mikroservisnaApp.Data
         public DbSet<TipDogadjaja> TipoviDogadjaja { get; set; }
         public DbSet<DogadjajPredavac> DogPreds{ get; set; }
 
+		public DbSet<OutboxMessage> OutboxTable { get; set; }
 
 		#region ModelCreating
 		// SeedData za bazu
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
-			// TipDogadjaja
-			modelBuilder.Entity<TipDogadjaja>().HasData(
+			//modelBuilder.Entity<OutboxMessage>().HasNoKey();
+            //modelBuilder.Entity<PostPredavacRequestDTO>().HasNoKey();
+			
+            // TipDogadjaja
+            modelBuilder.Entity<TipDogadjaja>().HasData(
 				new TipDogadjaja { Id = 1, Naziv = "Konferencija" },
 				new TipDogadjaja { Id = 2, Naziv = "Radionica" },
 				new TipDogadjaja { Id = 3, Naziv = "Seminar" },

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using mikroservisnaApp.Data;
 
@@ -11,9 +12,11 @@ using mikroservisnaApp.Data;
 namespace mikroservisnaApp.Migrations
 {
     [DbContext(typeof(DogadjajiDbContext))]
-    partial class DogadjajiDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260425230858_Added_Outbox_Table")]
+    partial class Added_Outbox_Table
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,15 +27,6 @@ namespace mikroservisnaApp.Migrations
 
             modelBuilder.Entity("Common.OutboxMessage", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Event")
-                        .HasColumnType("int");
-
                     b.Property<string>("Payload")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -42,8 +36,6 @@ namespace mikroservisnaApp.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
-
-                    b.HasKey("Id");
 
                     b.ToTable("OutboxTable");
                 });

@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Common;
+using Common.StrucniDogadjajDTO;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using mikroservisnaApp.Contracts;
@@ -9,6 +11,7 @@ using mikroservisnaApp.MQ_Container;
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Text;
+using System.Text.Json;
 
 namespace mikroservisnaApp.Repositories.SQL_Server
 {
@@ -141,7 +144,6 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 
 
             string organizatorId = Convert.ToString(dogadjaj.OrganizatorId);
-			await _mqClient.SendMessageAsync(organizatorId, organizatorExchangeName, organizatorRoutingKey, organizatorConsumeKey);
             EventHandler<string> handlerOrganizator = null;
             handlerOrganizator = (_, args) =>
             {
@@ -155,6 +157,9 @@ namespace mikroservisnaApp.Repositories.SQL_Server
             };
             _mqClient.OdgovorPrimljenOrganizator += handlerOrganizator;
 
+            await _mqClient.SendMessageAsync(organizatorId, organizatorExchangeName, organizatorRoutingKey, organizatorConsumeKey);
+
+
             await signal.WaitAsync(TimeSpan.FromSeconds(3));
 
             if (!organizatorExists)
@@ -162,39 +167,49 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 				return null;
 			}
 
-            StrucniDogadjaj eventToAdd = new()
-			{
-				Agenda = dogadjaj.Agenda,
-				Cena = dogadjaj.Cena,
-				DatumVreme = dogadjaj.DatumVreme,
-				Naziv = dogadjaj.Naziv,
-				Trajanje = dogadjaj.Trajanje,
-				LokacijaId = dogadjaj.LokacijaId,
-				OrganizatorId = dogadjaj.OrganizatorId,
-				TipId = dogadjaj.TipId,
-				SpisakPredavaca = dogadjaj.Predavaci.Select(p => new DogadjajPredavac
-				{
-					PredavacId = p.PredavacId,
-					RasporedPredavanja = p.RasporedPredavanja,
-				}).ToList()
-			};
-
 			int successful = 0;
-			try
+            using var transaction = await context.Database.BeginTransactionAsync();
+            try
 			{
-				var isAdded = await context.Dogadjaji.AddAsync(eventToAdd);
-				successful = await context.SaveChangesAsync();
+                StrucniDogadjaj eventToAdd = new()
+                {
+                    Agenda = dogadjaj.Agenda,
+                    Cena = dogadjaj.Cena,
+                    DatumVreme = dogadjaj.DatumVreme,
+                    Naziv = dogadjaj.Naziv,
+                    Trajanje = dogadjaj.Trajanje,
+                    LokacijaId = dogadjaj.LokacijaId,
+                    OrganizatorId = dogadjaj.OrganizatorId,
+                    TipId = dogadjaj.TipId,
+                    SpisakPredavaca = dogadjaj.Predavaci.Select(p => new DogadjajPredavac
+                    {
+                        PredavacId = p.PredavacId,
+                        RasporedPredavanja = p.RasporedPredavanja,
+                    }).ToList()
+                };
+
+                await context.Dogadjaji.AddAsync(eventToAdd);
+                successful = await context.SaveChangesAsync();
+
+
+                OutboxMessage outboxMsg = new()
+                {
+                    Payload = JsonSerializer.Serialize<StrucniDogadjajRequestDTO>(dogadjaj),
+					Event = OperationEvent.Created
+                };
+
+				await context.OutboxTable.AddAsync(outboxMsg);
+				successful += await context.SaveChangesAsync();
+
+				await transaction.CommitAsync();
 			}
 			catch (Exception ex)
 			{
+				await transaction.RollbackAsync();
                 Console.WriteLine( ex.Message);
 				throw;
 			}
-			if(successful != 0)
-			{
-				return dogadjaj;
-			}
-			return null;
+			return dogadjaj;
 
 		}
 
