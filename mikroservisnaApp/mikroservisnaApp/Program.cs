@@ -17,7 +17,8 @@ namespace mikroservisnaApp
 
             builder.Services.AddSqlServer<DogadjajiDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
 
-			builder.Services.AddSingleton<IMQPublisher, MQPublisher>();
+			builder.Services.AddSingleton<IMQClient, MQClient>();
+			//builder.Services.AddHostedService<MQInitializer>();
 
 			builder.Services.AddSingleton<CircuitBreaker>(sp =>
 				new CircuitBreaker(1, TimeSpan.FromSeconds(7))

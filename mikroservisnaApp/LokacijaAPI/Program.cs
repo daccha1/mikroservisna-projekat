@@ -1,5 +1,6 @@
 
 using LokacijaAPI.Data;
+using LokacijaAPI.Services;
 using ProductsAPI.Contracts;
 using ProductsAPI.Repositories;
 
@@ -13,15 +14,16 @@ namespace ProductsAPI
 
 			builder.Services.AddSqlServer<LokacijaDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
 
-
-
+			builder.Services.AddSingleton<IMQClient, MQClient>();
+			builder.Services.AddHostedService<MQInitializer>();
 			builder.Services.AddScoped<ILokacija, LokacijaSQLRepository>();
 			builder.Services.AddControllers();
 
 			builder.Services.AddOpenApi();
-
+			
+			
 			var app = builder.Build();
-
+			
 			// Configure the HTTP request pipeline.
 			if (app.Environment.IsDevelopment())
 			{

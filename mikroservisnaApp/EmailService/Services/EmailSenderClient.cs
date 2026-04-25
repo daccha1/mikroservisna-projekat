@@ -46,8 +46,8 @@ namespace EmailService.Services
 
 			var response = await resendClient.EmailSendAsync(new EmailMessage
 			{
-				From = "onboarding@resend.dev",
-				To = "nijedavid@gmail.com",
+				From = "david@dachadev.xyz",
+				To = ["nijedavid@gmail.com", "ilijazeljkovic1312@gmail.com" ],
 				Subject = "Test MessageQueue aplikacije",
 				HtmlBody = $"<p> Uspesno je kreiran objekat na servisu: DogadjajiService. <strong> {dtoObject} </strong>!</p>",
 			});

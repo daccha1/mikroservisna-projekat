@@ -18,8 +18,8 @@ namespace mikroservisnaApp.Controllers
 	public class StrucniDogadjajController : ControllerBase
 	{
 		private IStrucniDogadjaj _repository;
-		private IMQPublisher _mqPublisher;
-		public StrucniDogadjajController(IStrucniDogadjaj repository, IMQPublisher mqPublisher)
+		private IMQClient _mqPublisher;
+		public StrucniDogadjajController(IStrucniDogadjaj repository, IMQClient mqPublisher)
 		{
 			_mqPublisher = mqPublisher;
 			_repository = repository;
@@ -58,7 +58,7 @@ namespace mikroservisnaApp.Controllers
 				return NotFound("Nije uspelo dodavanje dogadjaja.");
 			}
 			string jsonBody = JsonSerializer.Serialize<StrucniDogadjajRequestDTO>(addEvent);
-			await _mqPublisher.SendMessage(jsonBody);
+			await _mqPublisher.SendMessageAsync(jsonBody, "events.event.eventsExchange", "event-publish-key");
 			return Ok(newEvent);
 		}
 

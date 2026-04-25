@@ -6,7 +6,9 @@ using mikroservisnaApp.Data;
 using mikroservisnaApp.Models;
 using mikroservisnaApp.Models.DTO.StrucniDogadjajDTO;
 using mikroservisnaApp.MQ_Container;
+using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Text;
 
 namespace mikroservisnaApp.Repositories.SQL_Server
 {
@@ -14,11 +16,12 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 	{
 
 		private DogadjajiDbContext context;
-		private IMQPublisher _mqPublisher;
-		public StrucniDogadjajSQLRepository(DogadjajiDbContext context, IMQPublisher mqPublisher)
+		private IMQClient _mqClient;
+		
+		public StrucniDogadjajSQLRepository(DogadjajiDbContext context, IMQClient mqPublisher)
 		{
 			this.context = context;
-			this._mqPublisher = mqPublisher;
+			this._mqClient = mqPublisher;
 		}
 
 		public async Task<List<StrucniDogadajajResponseDTO>> GetAll()
@@ -91,21 +94,52 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 			}
 			return true;
 		}
+		// validacija: ako neki od ID-eva za koje je ovaj dogadjaj vezan ne postoje
+		//														     vratiti gresku
+		// (slucaj da administrator sam unosi id-eve u tekst polja)
 
+		//bool validationResult = await validateEvent(dogadjaj);
+		//if (!validationResult)
+		//{
+		//	return null; // kontroler da proveri null
+		//}
+
+		// dogadjaj -> extract lokacija & organizator IDs -> MQ ka LocationAPI & 
 		public async Task<StrucniDogadjajRequestDTO> Post(StrucniDogadjajRequestDTO dogadjaj)
 		{
-			// validacija: ako neki od ID-eva za koje je ovaj dogadjaj vezan ne postoje
-			//														     vratiti gresku
-			// (slucaj da administrator sam unosi id-eve u tekst polja)
 
-			//bool validationResult = await validateEvent(dogadjaj);
-			//if (!validationResult)
-			//{
-			//	return null; // kontroler da proveri null
-			//}
-			
-			// dogadjaj -> extract lokacija & organizator IDs -> MQ ka LocationAPI & 
+			bool locationExists = false;
+			bool organizerExists = false;
 
+			// slanje na lokacijaAPI
+			string lokacijaId = Convert.ToString(dogadjaj.LokacijaId);
+			var signal = new SemaphoreSlim(0, 1);
+			_mqClient.OdgovorPrimljen += (_, args) =>
+			{
+				if (args == "true")
+				{
+					locationExists = true;
+					signal.Release();
+				}
+				else
+				{
+					return;
+				}
+
+			};
+
+			await _mqClient.SendMessageAsync(lokacijaId, locationExchangeName, locationRoutingKey, replyToString: locationConsumeKey);
+
+			await signal.WaitAsync(TimeSpan.FromSeconds(3));
+
+			if (!locationExists)
+			{
+				return null;
+			}
+
+			Console.WriteLine(locationExists);
+
+			//slanje na organizatorAPI
 
 			StrucniDogadjaj eventToAdd = new()
 			{
@@ -171,5 +205,27 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 
 			return true;
 		}
+
+
+		// email
+		string emailExchangeName = "events.event.eventsExchange";
+		string emailQueueName = "events.event.publishQueue";
+		string emailRoutingKey = "event-publish-key";
+
+		// location
+		string locationExchangeName = "events.location.locationExchange";
+		string locationQueueName = "events.location.publishQueue";
+		string locationRoutingKey = "location-publish-key";
+
+		string locationConsumeQueue = "events.location.consumeQueue";
+		string locationConsumeKey = "location-consume-key";
+
+		// organizator
+		string organizatorExchangeName = "events.organizer.organizerExchange";
+		string organizatorQueueName = "events.organizer.organizerQueue";
+		string organizatorRoutingKey = "organizer-publish-key";
+
+		string organizatorConsumeQueue = "events.organizer.consumeQueue";
+		string organizatorConsumeKey = "organizer-consume-key";
 	}
 }
