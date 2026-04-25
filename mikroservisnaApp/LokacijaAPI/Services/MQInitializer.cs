@@ -12,7 +12,7 @@
 		public async Task StartAsync(CancellationToken cancellationToken)
 		{
 			await _mqClient.EnsureStarted();
-			Console.WriteLine("POKRENUTO!!!");
+			Console.WriteLine("POKRENUT MQ CLIENT");
 		}
 
 		public Task StopAsync(CancellationToken cancellationToken)

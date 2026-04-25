@@ -17,8 +17,10 @@ namespace mikroservisnaApp.MQ_Container
 
 		public Task ReceiveMessageAsync();
 
-		public event EventHandler<string> OdgovorPrimljen;
-	}
+		public event EventHandler<string> OdgovorPrimljenLocation;
+		public event EventHandler<string> OdgovorPrimljenOrganizator;
+
+    }
 
 	
 
@@ -29,12 +31,12 @@ namespace mikroservisnaApp.MQ_Container
 		AsyncEventingBasicConsumer? locationConsumer;
 		AsyncEventingBasicConsumer? organizerConsumer;
 		
-		private readonly ConcurrentDictionary<string, string> _pendingRequests = new();
-		
-		public event EventHandler<string>? OdgovorPrimljen;
+		private readonly ConcurrentDictionary<string, string> _pendingRequest = new();
+        private readonly ConcurrentDictionary<string, string> _pendingRequestOrganizator = new();
 
-		// email
-		string emailExchangeName = "events.event.eventsExchange";
+
+        // email
+        string emailExchangeName = "events.event.eventsExchange";
 		string emailQueueName = "events.event.publishQueue";
 		string emailRoutingKey = "event-publish-key";
 
@@ -68,7 +70,7 @@ namespace mikroservisnaApp.MQ_Container
 			{
 				Console.WriteLine(">>>>POKRENUTA METODA SLANJA PORUKE!");
 				string correlationId = Guid.NewGuid().ToString("N");
-				_pendingRequests[correlationId] = jsonBody;
+				_pendingRequest[correlationId] = jsonBody;
 
 				byte[] byteBody = Encoding.UTF8.GetBytes(jsonBody);
 				
@@ -188,10 +190,31 @@ namespace mikroservisnaApp.MQ_Container
 					exchange: organizatorExchangeName,
 					routingKey: organizatorRoutingKey
 				);
-			#endregion
+
+            // consume queue
+            await publishChannel.ExchangeDeclareAsync(
+                    exchange: organizatorExchangeName,
+                    type: ExchangeType.Direct,
+                    durable: false,
+                    autoDelete: false
+                );
+            await publishChannel.QueueDeclareAsync(
+                    queue: organizatorConsumeQueue,
+                    durable: false,
+                    exclusive: false,
+                    autoDelete: false
+                );
+            await publishChannel.QueueBindAsync(
+                    queue: organizatorConsumeQueue,
+                    exchange: organizatorExchangeName,
+                    routingKey: organizatorConsumeKey
+                );
 
 
-			await ReceiveMessageAsync();
+            #endregion
+
+
+            await ReceiveMessageAsync();
 
 		}
 
@@ -208,9 +231,11 @@ namespace mikroservisnaApp.MQ_Container
 			}
 		}
 
-		public async Task ReceiveMessageAsync()
+        public event EventHandler<string>? OdgovorPrimljenLocation;
+        public event EventHandler<string>? OdgovorPrimljenOrganizator;
+        public async Task ReceiveMessageAsync()
 		{
-			if(locationConsumer != null && organizerConsumer != null)
+			if(locationConsumer != null)
 			{
 				return;
 			}
@@ -219,14 +244,12 @@ namespace mikroservisnaApp.MQ_Container
 			Console.WriteLine(">>> locationConsumer kreiran!");
 			locationConsumer.ReceivedAsync += async (_, ea) =>
 			{
-				Console.WriteLine(">>> USAO U locationConsumer handler!");
 				string body = Encoding.UTF8.GetString(ea.Body.ToArray());
-				Console.WriteLine($">>> Body: {body}");
-				Console.WriteLine($">>> CorrelationId: {ea.BasicProperties.CorrelationId}");
+
 				if (!body.IsNullOrEmpty())
 				{
 					var correlationId = ea.BasicProperties.CorrelationId;										// OVDE OBRATI PAZNJU
-					if (string.IsNullOrWhiteSpace(correlationId) || !_pendingRequests.TryRemove(correlationId, out var request))
+					if (string.IsNullOrWhiteSpace(correlationId) || !_pendingRequest.TryRemove(correlationId, out var request))
 					{
 						return;
 					}
@@ -236,36 +259,77 @@ namespace mikroservisnaApp.MQ_Container
 							multiple: false
 						);
 
-					OdgovorPrimljen?.Invoke(this, body);
+					OdgovorPrimljenLocation?.Invoke(this, body);
 				}
 			};
 			await publishChannel.BasicConsumeAsync(locationConsumeQueue, autoAck: false, locationConsumer);
 			Console.WriteLine($">>> Consumer registrovan na queue: {locationConsumeQueue}");
 
-			Console.WriteLine($">>> EnsureStarted ZAVRSEN! Connection: {connection.IsOpen}, Channel: {publishChannel.IsOpen}");
 
-			//organizerConsumer = new AsyncEventingBasicConsumer(publishChannel);
-			//organizerConsumer.ReceivedAsync += async (_, ea) =>
-			//{
-			//	string body = Encoding.UTF8.GetString(ea.Body.ToArray());
-			//	if (Convert.ToInt32(body) != 0)
-			//	{
-			//		var correlationId = ea.BasicProperties.CorrelationId;
-			//		if (string.IsNullOrWhiteSpace(correlationId) || !_pendingRequests.TryRemove(correlationId, out var request))
-			//		{
-			//			return;
-			//		}
 
-			//		await publishChannel.BasicAckAsync(
-			//				ea.DeliveryTag,
-			//				multiple: false
-			//			);
+			var organizatorConsumer = new AsyncEventingBasicConsumer(publishChannel);
 
-			//		OdgovorPrimljen?.Invoke(this, body);
-			//	}
-			//};
-			//await publishChannel.BasicConsumeAsync(organizatorConsumeQueue, autoAck: false, organizerConsumer);
+			organizatorConsumer.ReceivedAsync += async (_, ea) =>
+			{
+				string correlationId = ea.BasicProperties.CorrelationId;
+                if (string.IsNullOrWhiteSpace(correlationId) || !_pendingRequest.TryRemove(correlationId, out var request))
+                {
+                    return;
+                }
+                string body = Encoding.UTF8.GetString(ea.Body.ToArray());
+                Console.WriteLine("PORUKA PRIMLJENA NA CONSUMEQUEUE: ORGANIZATOR " + body);
+                #region commentedSmth
+                //// dbFunkcija za proveru <postoji / ne postoji>
+                //var props = new BasicProperties
+                //{
+                //    CorrelationId = correlationId,
+                //    Persistent = true,
+                //};
+                //string result = "true";
+                //byte[] byteBodyOrganizator = Encoding.UTF8.GetBytes(result);
 
-		}
+                //await publishChannel.BasicPublishAsync(
+                //		exchange: organizatorExchangeName,
+                //		routingKey: ea.BasicProperties.ReplyTo,
+                //		basicProperties: props,
+                //		mandatory: false,
+                //		body: byteBodyOrganizator
+                //                );
+
+                //await publishChannel.BasicAckAsync(ea.DeliveryTag, multiple:false);
+                #endregion
+                await publishChannel.BasicAckAsync(
+					    ea.DeliveryTag,
+					    multiple: false
+					);
+                // kada se obradi ovaj body -> ili ce biti true ili false (potvrdjuje ili ponistava akciju)
+                OdgovorPrimljenOrganizator?.Invoke(this, body);
+            };
+            await publishChannel.BasicConsumeAsync(organizatorConsumeQueue, autoAck: false, organizatorConsumer);
+
+
+            //organizerConsumer = new AsyncEventingBasicConsumer(publishChannel);
+            //organizerConsumer.ReceivedAsync += async (_, ea) =>
+            //{
+            //	string body = Encoding.UTF8.GetString(ea.Body.ToArray());
+            //	if (Convert.ToInt32(body) != 0)
+            //	{
+            //		var correlationId = ea.BasicProperties.CorrelationId;
+            //		if (string.IsNullOrWhiteSpace(correlationId) || !_pendingRequests.TryRemove(correlationId, out var request))
+            //		{
+            //			return;
+            //		}
+
+            //		await publishChannel.BasicAckAsync(
+            //				ea.DeliveryTag,
+            //				multiple: false
+            //			);
+
+            //		OdgovorPrimljen?.Invoke(this, body);
+            //	}
+            //};
+            //await publishChannel.BasicConsumeAsync(organizatorConsumeQueue, autoAck: false, organizerConsumer);
+
+        }
 	}
 }

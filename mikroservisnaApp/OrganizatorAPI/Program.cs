@@ -1,5 +1,6 @@
 using OrganizatorAPI.Contracts;
 using OrganizatorAPI.Data;
+using OrganizatorAPI.MQ_Container;
 using OrganizatorAPI.Repositories;
 
 namespace OrganizatorAPI
@@ -11,6 +12,10 @@ namespace OrganizatorAPI
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddSqlServer<OrganizatorDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+            builder.Services.AddSingleton<IMQClient, MQClient>();
+
+            builder.Services.AddHostedService<MQInitializer>();
 
             builder.Services.AddScoped<IOrganizator, OrganizatorSQLRepository>();
             builder.Services.AddControllers();

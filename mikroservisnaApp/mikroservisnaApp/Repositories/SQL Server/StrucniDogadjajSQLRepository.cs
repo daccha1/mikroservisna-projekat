@@ -109,26 +109,27 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 		{
 
 			bool locationExists = false;
-			bool organizerExists = false;
+			bool organizatorExists = false;
 
-			// slanje na lokacijaAPI
-			string lokacijaId = Convert.ToString(dogadjaj.LokacijaId);
+            #region locationHandler
+            string lokacijaId = Convert.ToString(dogadjaj.LokacijaId);
 			var signal = new SemaphoreSlim(0, 1);
-			_mqClient.OdgovorPrimljen += (_, args) =>
-			{
-				if (args == "true")
+            EventHandler<string> handler = null;
+            handler = (_, args) =>
+            {
+                if(args == "true")
 				{
 					locationExists = true;
 					signal.Release();
 				}
-				else
-				{
-					return;
-				}
+                
+                _mqClient.OdgovorPrimljenLocation -= handler; // ukloni sebe
+            };
+            _mqClient.OdgovorPrimljenLocation += handler;
 
-			};
 
-			await _mqClient.SendMessageAsync(lokacijaId, locationExchangeName, locationRoutingKey, replyToString: locationConsumeKey);
+
+            await _mqClient.SendMessageAsync(lokacijaId, locationExchangeName, locationRoutingKey, replyToString: locationConsumeKey);
 
 			await signal.WaitAsync(TimeSpan.FromSeconds(3));
 
@@ -136,12 +137,32 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 			{
 				return null;
 			}
+            #endregion
 
-			Console.WriteLine(locationExists);
 
-			//slanje na organizatorAPI
+            string organizatorId = Convert.ToString(dogadjaj.OrganizatorId);
+			await _mqClient.SendMessageAsync(organizatorId, organizatorExchangeName, organizatorRoutingKey, organizatorConsumeKey);
+            EventHandler<string> handlerOrganizator = null;
+            handlerOrganizator = (_, args) =>
+            {
+                if (args == "true")
+                {
+                    organizatorExists = true;
+                    signal.Release();
+                }
 
-			StrucniDogadjaj eventToAdd = new()
+                _mqClient.OdgovorPrimljenOrganizator -= handlerOrganizator; // ukloni sebe
+            };
+            _mqClient.OdgovorPrimljenOrganizator += handlerOrganizator;
+
+            await signal.WaitAsync(TimeSpan.FromSeconds(3));
+
+            if (!organizatorExists)
+			{
+				return null;
+			}
+
+            StrucniDogadjaj eventToAdd = new()
 			{
 				Agenda = dogadjaj.Agenda,
 				Cena = dogadjaj.Cena,
@@ -158,8 +179,17 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 				}).ToList()
 			};
 
-			var isAdded = await context.Dogadjaji.AddAsync(eventToAdd);
-			int successful = await context.SaveChangesAsync();
+			int successful = 0;
+			try
+			{
+				var isAdded = await context.Dogadjaji.AddAsync(eventToAdd);
+				successful = await context.SaveChangesAsync();
+			}
+			catch (Exception ex)
+			{
+                Console.WriteLine( ex.Message);
+				throw;
+			}
 			if(successful != 0)
 			{
 				return dogadjaj;
