@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
@@ -27,17 +28,14 @@ namespace EmailService.Services
 		string exchangeName = "events.event.eventsExchange";
 		string queueName = "events.event.publishQueue";
 
+		
 		private IServiceScopeFactory _scopeFactory;
-
+		
 		public MQConsumer(IServiceScopeFactory scopeFactory)
 		{
 			_scopeFactory = scopeFactory;
 		}
 
-		public async Task StartClient()
-		{
-			
-		}
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
@@ -119,9 +117,10 @@ namespace EmailService.Services
 			try
 			{
 				Console.WriteLine("Handler triggered!");
+				await RateLimit(stoppingToken);
 				using var scope = _scopeFactory.CreateScope();
 				var db = scope.ServiceProvider.GetRequiredService<EmailServiceDbContext>();
-
+				
 				var existingMessage = await db.ProcessedMessages.AnyAsync(pm => pm.EventId == ea.BasicProperties.MessageId);
 
 				if(existingMessage)
@@ -155,7 +154,7 @@ namespace EmailService.Services
 				await db.ProcessedMessages.AddAsync(msg, stoppingToken);
 				await db.SaveChangesAsync(stoppingToken);
 
-				
+
 				Console.WriteLine(mailObject);
 
 				await channel.BasicAckAsync(ea.DeliveryTag, false);
@@ -173,6 +172,44 @@ namespace EmailService.Services
 					);
 			};
 		}
+
+		private DateTime _windowStart = DateTime.MinValue;
+		private int _processedThroughWindow;
+
+		private TimeSpan RateLimitWindow = TimeSpan.FromMinutes(1);
+		private int MaxMessagesPerWindow = 10;
+
+		public async Task RateLimit(CancellationToken cancellationToken)
+		{
+			var currentMoment = DateTime.UtcNow;
+			
+			//      ako je default vrednost      ||     u trenutku uzimanja poruke, prosao minut
+			if(_windowStart == DateTime.MinValue || currentMoment - _windowStart >= RateLimitWindow)
+			{
+				_windowStart = currentMoment;
+				_processedThroughWindow = 0;
+			}
+
+			if(_processedThroughWindow < MaxMessagesPerWindow)
+			{
+				_processedThroughWindow++;
+				return;
+			}
+
+			var windowEndsAt = _windowStart + RateLimitWindow;
+			var waitTime = windowEndsAt > currentMoment ? windowEndsAt - currentMoment : TimeSpan.Zero;
+
+			if(waitTime > TimeSpan.Zero)
+			{
+				Console.WriteLine($"Rate limit prekoracen. Cekanje: {waitTime.TotalSeconds}s");
+				await Task.Delay(waitTime, cancellationToken);
+			}
+
+			_windowStart = DateTime.UtcNow;
+			_processedThroughWindow = 1;
+
+		}
+
 	}
 }
 
