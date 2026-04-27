@@ -76,6 +76,21 @@ namespace EmailService.Services
 							routingKey: "event-publish-key"
 						);
 
+					// DLQ
+					await channel.QueueDeclareAsync(
+							queue: "events.event.x-dead-queue",
+							durable: false,
+							exclusive: false,
+							cancellationToken: stoppingToken
+						);
+					await channel.QueueBindAsync(
+							queue: "events.event.x-dead-queue",
+							exchange: exchangeName,
+							routingKey: "dlq-route",
+							cancellationToken: stoppingToken
+						);
+
+
 					var consumer = new AsyncEventingBasicConsumer(channel);
 					consumer.ReceivedAsync += async (_, ea) =>
 					{
@@ -123,6 +138,12 @@ namespace EmailService.Services
 
 				StrucniDogadjajRequestDTO mailObject = JsonSerializer.Deserialize<StrucniDogadjajRequestDTO>(message.Payload);
 
+				if(message == null || string.IsNullOrEmpty(mailObject.Naziv) || mailObject.Naziv.Length < 5)
+				{
+					await channel.BasicAckAsync(ea.DeliveryTag, false, stoppingToken);
+					throw new Exception($"Poruka nije validna. Poslata je na dead letter queue {DateTime.UtcNow}");
+				}
+
 				await EmailSenderClient.Instance.SendMessage(mailObject);
 
 				ProcessedMessage msg = new()
@@ -142,7 +163,14 @@ namespace EmailService.Services
 			catch (Exception ex)
 			{
 				Console.WriteLine(ex.Message);
-				await channel.BasicNackAsync(ea.DeliveryTag, false, requeue: true);
+
+				// ovde treba da je sibne na DLQ
+				await channel.BasicPublishAsync(
+						exchange: exchangeName,
+						routingKey: "dlq-route",
+						mandatory: true,
+						body: ea.Body
+					);
 			};
 		}
 	}
