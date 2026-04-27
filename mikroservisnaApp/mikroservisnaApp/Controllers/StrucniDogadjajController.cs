@@ -58,8 +58,8 @@ namespace mikroservisnaApp.Controllers
 			{
 				return NotFound("Nije uspelo dodavanje dogadjaja.");
 			}
-			string jsonBody = JsonSerializer.Serialize<StrucniDogadjajRequestDTO>(addEvent);
-			await _mqPublisher.SendMessageAsync(jsonBody, "events.event.eventsExchange", "event-publish-key");
+			//string jsonBody = JsonSerializer.Serialize<StrucniDogadjajRequestDTO>(addEvent);
+			//await _mqPublisher.SendMessageAsync(jsonBody, "events.event.eventsExchange", "event-publish-key");
 			return Ok(newEvent);
 		}
 

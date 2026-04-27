@@ -5,6 +5,7 @@ using mikroservisnaApp.Data;
 using mikroservisnaApp.MQ_Container;
 using mikroservisnaApp.Patterns;
 using mikroservisnaApp.Repositories.SQL_Server;
+using mikroservisnaApp.Services.HostedServices;
 using System.Text.Json.Serialization;
 
 namespace mikroservisnaApp
@@ -16,6 +17,13 @@ namespace mikroservisnaApp
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddSqlServer<DogadjajiDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+			builder.Services.Configure<HostOptions>(opt =>
+			{
+				opt.StartupTimeout = TimeSpan.FromSeconds(10);
+				opt.ServicesStartConcurrently = true; // proveri
+			});
+			builder.Services.AddHostedService<OutboxEventPublishService>();
 
 			builder.Services.AddSingleton<IMQClient, MQClient>();
 			//builder.Services.AddHostedService<MQInitializer>();

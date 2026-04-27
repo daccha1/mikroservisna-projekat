@@ -13,7 +13,7 @@ namespace mikroservisnaApp.MQ_Container
 	public interface IMQClient
 	{
 		public Task EnsureStarted();
-		public Task SendMessageAsync(string jsonBody, string exchangeName, string routingKeyString, string replyToString= "");
+		public Task SendMessageAsync(string jsonBody, string exchangeName, string routingKeyString, CancellationToken cancellationToken = default , string replyToString= "");
 
 		public Task ReceiveMessageAsync();
 
@@ -56,7 +56,7 @@ namespace mikroservisnaApp.MQ_Container
 		string organizatorConsumeQueue = "events.organizer.consumeQueue";
 		string organizatorConsumeKey = "organizer-consume-key";
 
-		public async Task SendMessageAsync(string jsonBody, string exchangeName, string routingKeyString, string replyToString="")
+		public async Task SendMessageAsync(string jsonBody, string exchangeName, string routingKeyString, CancellationToken cancellation = default, string replyToString="")
 		{
 			await EnsureStarted();
 			

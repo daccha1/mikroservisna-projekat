@@ -157,7 +157,7 @@ namespace mikroservisnaApp.Repositories.SQL_Server
             };
             _mqClient.OdgovorPrimljenOrganizator += handlerOrganizator;
 
-            await _mqClient.SendMessageAsync(organizatorId, organizatorExchangeName, organizatorRoutingKey, organizatorConsumeKey);
+            await _mqClient.SendMessageAsync(organizatorId, organizatorExchangeName, organizatorRoutingKey, replyToString: organizatorConsumeKey);
 
 
             await signal.WaitAsync(TimeSpan.FromSeconds(3));
