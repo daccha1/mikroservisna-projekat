@@ -30,10 +30,7 @@ namespace EmailService.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("EventType")
-                        .HasColumnType("int");
-
-                    b.Property<string>("JsonObject")
+                    b.Property<string>("EventId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

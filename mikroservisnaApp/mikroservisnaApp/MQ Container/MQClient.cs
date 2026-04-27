@@ -13,7 +13,7 @@ namespace mikroservisnaApp.MQ_Container
 	public interface IMQClient
 	{
 		public Task EnsureStarted();
-		public Task SendMessageAsync(string jsonBody, string exchangeName, string routingKeyString, CancellationToken cancellationToken = default , string replyToString= "");
+		public Task SendMessageAsync(string jsonBody, string exchangeName, string routingKeyString, CancellationToken cancellationToken = default , string replyToString= "", string messageId = "");
 
 		public Task ReceiveMessageAsync();
 
@@ -56,7 +56,7 @@ namespace mikroservisnaApp.MQ_Container
 		string organizatorConsumeQueue = "events.organizer.consumeQueue";
 		string organizatorConsumeKey = "organizer-consume-key";
 
-		public async Task SendMessageAsync(string jsonBody, string exchangeName, string routingKeyString, CancellationToken cancellation = default, string replyToString="")
+		public async Task SendMessageAsync(string jsonBody, string exchangeName, string routingKeyString, CancellationToken cancellation = default, string replyToString="", string messageId = "")
 		{
 			await EnsureStarted();
 			
@@ -73,14 +73,15 @@ namespace mikroservisnaApp.MQ_Container
 				_pendingRequest[correlationId] = jsonBody;
 
 				byte[] byteBody = Encoding.UTF8.GetBytes(jsonBody);
-				
+
 
 				var properties = new BasicProperties
 				{
 					Persistent = true,
 					ContentType = "application/json",
 					ReplyTo = replyToString,
-					CorrelationId = correlationId
+					CorrelationId = correlationId,
+					MessageId = string.IsNullOrEmpty(messageId) ? default : messageId
 				};
 
 
