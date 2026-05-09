@@ -133,7 +133,7 @@ namespace OrganizatorAPI.MQ_Container
 
                 Console.WriteLine($">>> ReplyTo vrednost: '{ea.BasicProperties.ReplyTo}'");
                 Console.WriteLine($">>> CorrelationId vrednost: '{ea.BasicProperties.CorrelationId}'");
-                Console.WriteLine($">>> Odgovor koji saljem: '{odgovor}'");
+                Console.WriteLine($">>> Odgovor: '{odgovor}'");
 
                 await publishChannel.BasicPublishAsync(
                         organizatorExchangeName,
@@ -142,7 +142,7 @@ namespace OrganizatorAPI.MQ_Container
                         basicProperties: props,
                         mandatory: false
                 );
-                Console.WriteLine(">>> BasicPublish pozvan!");
+                Console.WriteLine(">>> basicpublish pozvan");
 
                 await publishChannel.BasicAckAsync(ea.DeliveryTag, false);
 
