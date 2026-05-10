@@ -21,7 +21,7 @@ namespace PosetilacSagaOrkestrator.Models
 		public Guid CorrelationId { get; set; } // za identifikaciju poruke i recorda
 		public SagaStates State { get; set; } = SagaStates.Created;
 		public DateTime CreatedAt { get; set; }
-		
+		public string Interesovanje { get; set; }
 		public string? FailedReason { get; set; }
 	}
 }

@@ -10,10 +10,18 @@ namespace PosetilacSagaOrkestrator.Data
 	{
 		public PosetilacOrkestratorDbContext(DbContextOptions options) : base(options) {}
 
-		protected PosetilacOrkestratorDbContext() {}
+		public PosetilacOrkestratorDbContext() {}
 
 		public DbSet<PosetilacSagaState> PosetilacSagaStates { get; set; }
+		public DbSet<GiftOutboxMessage> GiftsOutboxMessages { get; set; }
 
+		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+		{
+			if (!optionsBuilder.IsConfigured)
+			{
+				optionsBuilder.UseSqlServer("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=PosetilacSagaOrkestrator_Db;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
+			}
+		}
 
 	}
 }
