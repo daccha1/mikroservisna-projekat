@@ -1,18 +1,23 @@
+using Common.Saga_Contracts;
 using Microsoft.EntityFrameworkCore;
 using mikroservisnaApp.Models.DTO.PosetilacDTO;
 using PosetilacAPI.Contracts;
 using PosetilacAPI.Data;
+using PosetilacAPI.Models;
+using PosetilacAPI.MQ_Container;
 
 namespace PosetilacAPI.Repositories
 {
     public class PosetilacSQLRepository : IPosetilac
     {
         private PosetilacDbContext context;
-
-        public PosetilacSQLRepository(PosetilacDbContext context)
+        private IMQClient _mqClient;
+        public PosetilacSQLRepository(PosetilacDbContext context, IMQClient mqClient)
         {
             this.context = context;
-        }
+            _mqClient = mqClient;
+
+		}
 
         public async Task<List<PosetilacResponseDTO>> GetAll()
         {
@@ -50,23 +55,35 @@ namespace PosetilacAPI.Repositories
 
         public async Task<PosetilacRequestDTO> Post(PosetilacRequestDTO posetilac)
         {
-            Models.Posetilac noviPosetilac = new()
+            Posetilac noviPosetilac = new()
             {
                 Ime = posetilac.Ime,
                 Prezime = posetilac.Prezime,
                 StatusZaposlenja = posetilac.StatusZaposlenja,
                 Interesovanje = posetilac.Interesovanje,
-                DogadjajId = posetilac.DogadjajId
+                DogadjajId = posetilac.DogadjajId,
+                CorrelationId = Guid.NewGuid()
             };
 
-            context.Posetioci.Add(noviPosetilac);
-            int isAdded = await context.SaveChangesAsync();
-            if (isAdded != 0)
+            PosetilacCreated posetilacCreatedEvent = new()
             {
-                return posetilac;
-            }
+				Id = Guid.NewGuid(),
+				CorrelationId = noviPosetilac.CorrelationId,
+                CreatedAt = DateTime.UtcNow,
+                Interesovanje = noviPosetilac.Interesovanje
+            };
+
+            await _mqClient.SendMessage(posetilacCreatedEvent);
+            context.Posetioci.Add(noviPosetilac);
+			int isAdded = await context.SaveChangesAsync();
+
+			if (isAdded != 0)
+			{
+				return posetilac;
+			}
             return null;
-        }
+			
+		}
 
         public async Task<bool> Update(int idPosetilac, PosetilacRequestDTO updatedPosetilac)
         {

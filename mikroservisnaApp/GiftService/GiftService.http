@@ -1,0 +1,6 @@
+@GiftService_HostAddress = http://localhost:5069
+
+GET {{GiftService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

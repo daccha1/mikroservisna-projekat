@@ -1,5 +1,6 @@
 using PosetilacAPI.Contracts;
 using PosetilacAPI.Data;
+using PosetilacAPI.MQ_Container;
 using PosetilacAPI.Repositories;
 
 namespace PosetilacAPI
@@ -11,6 +12,9 @@ namespace PosetilacAPI
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddSqlServer<PosetilacDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+            builder.Services.AddSingleton<IMQClient, MQClient>();
+            builder.Services.AddHostedService<MQInitializer>();
 
             builder.Services.AddScoped<IPosetilac, PosetilacSQLRepository>();
             builder.Services.AddControllers();

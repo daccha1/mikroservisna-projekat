@@ -5,4 +5,5 @@
   <Project Path="mikroservisnaApp/mikroservisnaApp.csproj" />
   <Project Path="OrganizatorAPI\OrganizatorAPI.csproj" />
   <Project Path="PosetilacAPI\PosetilacAPI.csproj" />
+  <Project Path="PosetilacSagaOrkestrator/PosetilacSagaOrkestrator.csproj" Id="c4726898-07d4-43d9-ac3b-2c9369076da3" />
 </Solution>

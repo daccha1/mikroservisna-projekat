@@ -6,6 +6,7 @@ namespace PosetilacAPI.Models
     public class Posetilac
     {
         public int Id { get; set; }
+        public Guid CorrelationId { get; set; } = Guid.NewGuid();
         public string Ime { get; set; }
         public string Prezime { get; set; }
         public string StatusZaposlenja { get; set; }

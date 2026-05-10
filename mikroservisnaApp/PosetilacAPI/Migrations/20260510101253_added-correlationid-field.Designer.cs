@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PosetilacAPI.Data;
 
@@ -11,9 +12,11 @@ using PosetilacAPI.Data;
 namespace PosetilacAPI.Migrations
 {
     [DbContext(typeof(PosetilacDbContext))]
-    partial class PosetilacDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260510101253_added-correlationid-field")]
+    partial class addedcorrelationidfield
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -60,7 +63,7 @@ namespace PosetilacAPI.Migrations
                         new
                         {
                             Id = 1,
-                            CorrelationId = new Guid("c5db59d7-9e3d-48fd-89c5-e433b5eaf01a"),
+                            CorrelationId = new Guid("d95a2dc4-fda5-4a8b-9e1d-55704f99bbe9"),
                             DogadjajId = 1,
                             Ime = "Petar",
                             Interesovanje = "Vestacka Inteligencija",
@@ -70,7 +73,7 @@ namespace PosetilacAPI.Migrations
                         new
                         {
                             Id = 2,
-                            CorrelationId = new Guid("98230c8d-f5db-4202-9734-3385e7d11c1f"),
+                            CorrelationId = new Guid("1c4b43e9-683e-4b05-a517-a9f420839479"),
                             DogadjajId = 2,
                             Ime = "Milica",
                             Interesovanje = "Web development",
@@ -80,7 +83,7 @@ namespace PosetilacAPI.Migrations
                         new
                         {
                             Id = 3,
-                            CorrelationId = new Guid("945a2aea-0eca-4322-936c-0608b7142372"),
+                            CorrelationId = new Guid("3cb49b18-df27-4a66-ad21-87e8cf7b054e"),
                             DogadjajId = 3,
                             Ime = "Jovan",
                             Interesovanje = "Machine Learning",
@@ -90,7 +93,7 @@ namespace PosetilacAPI.Migrations
                         new
                         {
                             Id = 4,
-                            CorrelationId = new Guid("9fa651d7-3dce-4c73-aa03-b0eca675b7de"),
+                            CorrelationId = new Guid("daa8e113-960c-4c1d-addc-2b4f396895b1"),
                             DogadjajId = 1,
                             Ime = "Ana",
                             Interesovanje = "Embedded",
@@ -100,7 +103,7 @@ namespace PosetilacAPI.Migrations
                         new
                         {
                             Id = 5,
-                            CorrelationId = new Guid("29dfd66c-644f-409e-8b2b-1dfc4a0cb386"),
+                            CorrelationId = new Guid("f492bd80-4540-4d04-b85c-40b1234f1fec"),
                             DogadjajId = 2,
                             Ime = "Nikola",
                             Interesovanje = "Mikroservisi",
