@@ -1,4 +1,5 @@
 ﻿using Common.Saga_Contracts;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
 using PosetilacSagaOrkestrator.Data;
 using PosetilacSagaOrkestrator.Models;
@@ -26,11 +27,19 @@ namespace PosetilacSagaOrkestrator.Services.MQ_Container
 				var sagaDb = new PosetilacOrkestratorDbContext();
 				var outboxMsg = sagaDb.GiftsOutboxMessages.Where(msg => msg.Status == GiftOutboxStatus.ForProcessing || msg.Status == (GiftOutboxStatus)0).FirstOrDefault();
 
-				if (outboxMsg == null) continue;
+				if (outboxMsg == null)
+				{
+					await Task.Delay(2000);
+					continue;
+				};
 				
 				var sagaState = sagaDb.PosetilacSagaStates.Where(saga => saga.CorrelationId == outboxMsg.CorrelationId).FirstOrDefault();
 
-				if (sagaState == null) continue;
+				if (sagaState == null)
+				{
+					await Task.Delay(2000);
+					continue;
+				};
 
 				CreateGift createGiftRequest = new()
 				{
@@ -50,7 +59,50 @@ namespace PosetilacSagaOrkestrator.Services.MQ_Container
 
 				await sagaDb.SaveChangesAsync();
 
-				Task.Delay(3000);
+				await Task.Delay(3000);
+			}
+		}
+
+		public async static void DispatchNotificationOutboxMessage()
+		{
+			while (true)
+			{
+				var dbSaga = new PosetilacOrkestratorDbContext();
+				var outboxMsg = await dbSaga.NotificationsOutboxMessages.Where(msg => msg.Status == NotificationOutboxStatus.ForProcessing).FirstOrDefaultAsync();
+
+				if(outboxMsg == null)
+				{
+					await Task.Delay(3000);
+					continue;
+				}
+
+				NotifyPosetilac notificationObject = new()
+				{
+					Id = Guid.NewGuid(),
+					CorrelationId = outboxMsg.CorrelationId,
+					Email = "nijedavid@gmail.com"
+				};
+
+				var currentSaga = await dbSaga.PosetilacSagaStates.Where(saga => saga.CorrelationId == outboxMsg.CorrelationId).FirstOrDefaultAsync();
+
+				if (currentSaga == null)
+				{
+					await Task.Delay(2000);
+					continue;
+				};
+
+				currentSaga.State = SagaStates.WaitingForNotification;
+
+				dbSaga.PosetilacSagaStates.Update(currentSaga);
+				
+				using var mqClient = new MQClient();
+				await mqClient.Publish("notify-posetilac", JsonSerializer.Serialize<NotifyPosetilac>(notificationObject));
+
+				outboxMsg.Status = NotificationOutboxStatus.Processed;
+				dbSaga.NotificationsOutboxMessages.Update(outboxMsg);
+				await dbSaga.SaveChangesAsync();
+
+				await Task.Delay(3000);
 			}
 		}
 	}

@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
 using Common;
+using Common.Saga_Contracts;
 using Common.StrucniDogadjajDTO;
 using EmailService.Data;
 using EmailService.Models;
@@ -28,7 +29,11 @@ namespace EmailService.Services
 		string exchangeName = "events.event.eventsExchange";
 		string queueName = "events.event.publishQueue";
 
-		
+		private string sagaExchangeName = "saga-exchange";
+
+		public string emailServiceQueue = "events.email.notify-posetilac";
+		public string emailServiceRouting = "notify-posetilac";
+
 		private IServiceScopeFactory _scopeFactory;
 		
 		public MQConsumer(IServiceScopeFactory scopeFactory)
@@ -88,14 +93,44 @@ namespace EmailService.Services
 							cancellationToken: stoppingToken
 						);
 
+					// saga queue & exchange
 
-					var consumer = new AsyncEventingBasicConsumer(channel);
-					consumer.ReceivedAsync += async (_, ea) =>
+					await channel.ExchangeDeclareAsync(
+							exchange: sagaExchangeName,
+							type: ExchangeType.Direct,
+							durable: false,
+							autoDelete: false
+						);
+					await channel.QueueDeclareAsync(
+							queue: emailServiceQueue,
+							durable: false,
+							exclusive: false,
+							autoDelete: false
+						);
+					await channel.QueueBindAsync(
+							queue: emailServiceQueue,
+							exchange: sagaExchangeName,
+							routingKey: emailServiceRouting
+						);
+
+
+					// CONSUMER KOJI OSLUSKUJE KREIRANJE NOVOG EVENTA (event <=> strucni dogadjaj)
+					var consumerEventCreated = new AsyncEventingBasicConsumer(channel);
+					consumerEventCreated.ReceivedAsync += async (_, ea) =>
 					{
-						await HandleMessageAsync(ea, stoppingToken);
+						await HandleEventMessageAsync(ea, stoppingToken);
 					};
 
-					await channel.BasicConsumeAsync(queueName, autoAck: false, consumer);
+					await channel.BasicConsumeAsync(queueName, autoAck: false, consumerEventCreated);
+
+					// CONSUMER KOJI OSLUSKUJE SAGA EVENT: Slanje notifikacije posetiocu
+					var consumerPosetilacNotification = new AsyncEventingBasicConsumer(channel);
+					consumerPosetilacNotification.ReceivedAsync += async (_, ea) =>
+					{
+						await HandlePosetilacNotification(ea, stoppingToken);
+					};
+					await channel.BasicConsumeAsync(emailServiceQueue, autoAck: false, consumerPosetilacNotification);
+					
 					Console.WriteLine("Consumer is listening!");
 
 					await Task.Delay(Timeout.Infinite, stoppingToken);
@@ -112,11 +147,48 @@ namespace EmailService.Services
 			}
 		}
 
-		private async Task HandleMessageAsync(BasicDeliverEventArgs ea, CancellationToken stoppingToken)
+		private async Task HandlePosetilacNotification(BasicDeliverEventArgs ea, CancellationToken stoppingToken)
+		{
+			using var scope = _scopeFactory.CreateScope();
+			var db = scope.ServiceProvider.GetService<EmailServiceDbContext>();
+
+			// ea mora da se konvertuje u objekat
+			byte[] body = ea.Body.ToArray();
+			var bodyString = Encoding.UTF8.GetString(body);
+			NotifyPosetilac? notification = JsonSerializer.Deserialize<NotifyPosetilac>(bodyString);
+
+			if (notification == null) return;
+
+			var exist = await db.ProcessedMessages.Where(pm => pm.CorrelationId == notification.CorrelationId).FirstOrDefaultAsync();
+
+			if(exist != null)
+			{
+				Console.WriteLine("Vec postoji mejl kojim je obavesten dati klijent.");
+				Console.WriteLine("-- OTKAZIVANJE PORUKE --");
+				await channel.BasicAckAsync(ea.DeliveryTag, false);
+				return;
+			}
+
+			await EmailSenderClient.Instance.SendMessage(notification);
+
+			var processedMessage = new ProcessedMessage()
+			{
+				CorrelationId = notification.CorrelationId,
+				ProcessedTime = DateTime.UtcNow,
+				EventId = $"{notification.CorrelationId}"
+			};
+			Console.WriteLine($"Sacuvan mejl za CorrelationID: {notification.CorrelationId}");
+
+			await db.ProcessedMessages.AddAsync(processedMessage);
+			await db.SaveChangesAsync();
+			await channel.BasicAckAsync(ea.DeliveryTag, false);
+
+		}
+
+		private async Task HandleEventMessageAsync(BasicDeliverEventArgs ea, CancellationToken stoppingToken)
 		{
 			try
 			{
-				Console.WriteLine("Handler triggered!");
 				await RateLimit(stoppingToken);
 				using var scope = _scopeFactory.CreateScope();
 				var db = scope.ServiceProvider.GetRequiredService<EmailServiceDbContext>();

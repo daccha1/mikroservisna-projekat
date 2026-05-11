@@ -13,16 +13,6 @@ namespace PosetilacSagaOrkestrator.Services.MQ_Container
 		private IChannel _channel;
 		private IConnection _connection;
 
-		private string exchangeName = "saga-exchange";
-		private string pubPosetilacCreated = "events.orch.pos-creation";
-		private string pubPosetilacRouting = "create-posetilac";
-
-		private string pubGiftPosetilac = "events.posetilac.create-gift";
-		private string pubGiftPosetilacRouting = "create-gift";
-
-		public string orchConsumeQueue = "events.orch.consume-queue";
-		public string orchConsumeRouting = "gift-created";
-
 		public void Dispose()
 		{
 			_connection?.Dispose();
@@ -91,6 +81,19 @@ namespace PosetilacSagaOrkestrator.Services.MQ_Container
 					routingKey: orchConsumeRouting
 				);
 
+			// email queue za notify-ing posetilaca
+			await _channel.QueueDeclareAsync(
+					queue: emailServiceQueue,
+					durable: false,
+					exclusive: false,
+					autoDelete: false
+				);
+			await _channel.QueueBindAsync(
+					queue: emailServiceQueue,
+					exchange: exchangeName,
+					routingKey: emailServiceRouting
+				);
+
 		}
 
 
@@ -135,6 +138,22 @@ namespace PosetilacSagaOrkestrator.Services.MQ_Container
 			await _channel.BasicConsumeAsync(queueName, false, consumer);
 		}
 
+
+
+
+		private string exchangeName = "saga-exchange";
+
+		private string pubPosetilacCreated = "events.orch.pos-creation";
+		private string pubPosetilacRouting = "create-posetilac";
+
+		private string pubGiftPosetilac = "events.posetilac.create-gift";
+		private string pubGiftPosetilacRouting = "create-gift";
+
+		public string orchConsumeQueue = "events.orch.consume-queue";
+		public string orchConsumeRouting = "gift-created";
+
+		public string emailServiceQueue = "events.email.notify-posetilac";
+		public string emailServiceRouting = "notify-posetilac";
 
 	}
 }

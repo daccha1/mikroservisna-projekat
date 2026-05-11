@@ -5,11 +5,13 @@ using PosetilacSagaOrkestrator.Services.MQ_Container;
 
 namespace PosetilacSagaOrkestrator
 {
+	
 	internal class Program
 	{
 		static async Task Main(string[] args)
 		{
-			var _ = Task.Run(() => MessageDispatcher.DispatchGiftPosetilacOutboxMessage());
+			_ = Task.Run(() => MessageDispatcher.DispatchGiftPosetilacOutboxMessage());
+			_ = Task.Run(() => MessageDispatcher.DispatchNotificationOutboxMessage());
 
 			// uhvati poruku da je kreiran posetilac
 			// kreiramo inicijalni state, outbox state, i bg workera
@@ -63,35 +65,21 @@ namespace PosetilacSagaOrkestrator
 
 			});
 
-			await mqClient.Subscribe<CreatedGift>("events.orch.consume-queue", async (e) => {
-				Console.WriteLine(" STIGAO ODGOVOR SA GiftService ");
+			await mqClient.Subscribe<NotifyOrchestratorEvent>("events.orch.consume-queue", async (e) => {
+				Console.WriteLine(" << STIGAO ODGOVOR NA CONSUME QUEUE >> ");
 
-				var dbSaga = new PosetilacOrkestratorDbContext();
-
-				var saga = dbSaga.PosetilacSagaStates.Where(s => s.CorrelationId == e.CorrelationId).FirstOrDefault();
-
-				if (saga == null)
+				switch (e.EventType)
 				{
-					return;
+					case EventType.GiftEvent:
+						SagaConsumingQueueHandler.HandleGiftEvent(e);
+						Console.WriteLine(e.EventType + " " + e.GiftStatus);
+						break;
+					case EventType.NotificationEvent:
+						SagaConsumingQueueHandler.HandleNotificationEvent(e);
+						break;
+					case EventType.Default:
+						break;
 				}
-
-				if(e.GiftStatus == GiftStatus.Created)
-				{
-					saga.State = SagaStates.Gifted;
-				}
-				else
-				{
-					saga.FailedReason = "Gift nije uspesno kreiran.";
-					Console.WriteLine("Gift nije uspesno kreiran. Zaustavljanje Sage... ");
-					dbSaga.PosetilacSagaStates.Update(saga);
-					await dbSaga.SaveChangesAsync();
-
-					return;
-				}
-				
-
-				dbSaga.PosetilacSagaStates.Update(saga);
-				await dbSaga.SaveChangesAsync();
 
 			});
 

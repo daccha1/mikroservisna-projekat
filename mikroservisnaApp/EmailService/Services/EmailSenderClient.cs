@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Azure.Core.GeoJson;
+using Common.Saga_Contracts;
+using Common.StrucniDogadjajDTO;
+using EmailService.Models;
+using Microsoft.Extensions.Configuration;
+using Resend;
+using System;
 using System.Collections.Generic;
 using System.Text;
-using Resend;
-using Microsoft.Extensions.Configuration;
-using EmailService.Models;
-using Common.StrucniDogadjajDTO;
 
 namespace EmailService.Services
 {
@@ -34,6 +36,24 @@ namespace EmailService.Services
 
 			resendClient = ResendClient.Create(apiKey);
 			
+		}
+
+		public async Task SendMessage(NotifyPosetilac notification)
+		{
+			if (resendClient == null)
+			{
+				Console.WriteLine("Resend client is not initialized.");
+				return;
+			}
+			
+			var response = await resendClient.EmailSendAsync(new EmailMessage
+			{
+				From = "david@dachadev.xyz",
+				To = ["ilijazeljkovic1312@gmail.com", $"{notification.Email}"],
+				Subject = "Dobrodošli na event!",
+				HtmlBody = $"<p> Uspešno ste prijavljeni na event!  <strong> Vaš vaučer je: {notification.CorrelationId} </strong>!</p>",
+			});
+
 		}
 
 		public async Task SendMessage(StrucniDogadjajRequestDTO dtoObject)

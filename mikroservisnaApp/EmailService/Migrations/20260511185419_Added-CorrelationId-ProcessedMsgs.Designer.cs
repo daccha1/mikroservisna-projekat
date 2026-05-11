@@ -4,6 +4,7 @@ using EmailService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EmailService.Migrations
 {
     [DbContext(typeof(EmailServiceDbContext))]
-    partial class EmailServiceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260511185419_Added-CorrelationId-ProcessedMsgs")]
+    partial class AddedCorrelationIdProcessedMsgs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

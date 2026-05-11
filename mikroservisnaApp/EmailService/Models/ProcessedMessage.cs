@@ -9,6 +9,7 @@ namespace EmailService.Models
 	{
 		public int Id { get; set; }
 		public string EventId { get; set; }
+		public Guid CorrelationId { get; set; }
 		public DateTime ProcessedTime { get; set; } = DateTime.UtcNow;
 	}
 }

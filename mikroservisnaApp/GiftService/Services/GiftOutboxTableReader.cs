@@ -33,15 +33,17 @@ namespace GiftService.Services
 						continue;
 					}
 
-					CreatedGift giftMsg = new()
+					NotifyOrchestratorEvent giftMsg = new()
 					{
-						CorrelationId = outboxResult.CorrelationId
+						EventType = EventType.GiftEvent,
+						GiftStatus = GiftStatus.Created,
+						CorrelationId = outboxResult.CorrelationId,
 					};
 
 					// ovo sad treba da se publishuje na orkestrator
 					var mqClient = scope.ServiceProvider.GetService<IMQClient>();
 
-					await mqClient.SendMessage(JsonSerializer.Serialize<CreatedGift>(giftMsg));
+					await mqClient.SendMessage(JsonSerializer.Serialize<NotifyOrchestratorEvent>(giftMsg));
 
 					outboxResult.Status = GiftOutboxStatus.Processed;
 					db.GiftCreatedOutboxTable.Update(outboxResult);
