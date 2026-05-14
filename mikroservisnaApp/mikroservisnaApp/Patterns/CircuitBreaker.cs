@@ -1,4 +1,6 @@
-﻿namespace mikroservisnaApp.Patterns
+﻿using System.Diagnostics;
+
+namespace mikroservisnaApp.Patterns
 {
 	public enum CircuitBreakerState
 	{
@@ -11,7 +13,7 @@
 	{
 		private object _lock = new object();
 		private readonly int _failuireThreshold;
-		private readonly TimeSpan _openDuration;
+		private readonly TimeSpan _openDuration; // koliko dugo da stoji otvoren pre nego sto pusti zahtev
 		private DateTime _lastFailiureTime = DateTime.MinValue;
 		private int _failuireCount;
 		private CircuitBreakerState _state = CircuitBreakerState.Closed;
@@ -27,7 +29,7 @@
 			get
 			{
 				lock (_lock)
-				{
+				{					//						   ako je proslo dovoljno da pusti zahtev
 					if (_state == CircuitBreakerState.Open && (DateTime.UtcNow - _lastFailiureTime) > _openDuration)
 					{
 						_state = CircuitBreakerState.HalfOpen;
@@ -61,16 +63,19 @@
 			{
 				lock (_lock)
 				{
+					// podestnik: u program.cs je _failuireThreshold = 1 zbog testiranja
 					_failuireCount += 2;
 					_lastFailiureTime = DateTime.UtcNow;
 
 					if (_state == CircuitBreakerState.HalfOpen)
 					{
 						_state = CircuitBreakerState.Open;
+						Debug.Write("CircuitBreaker OPEN");
 					}
 					if (_failuireCount > _failuireThreshold)
 					{
 						_state = CircuitBreakerState.Open;
+						Debug.Write("CircuitBreaker OPEN");
 					}
 				}
 

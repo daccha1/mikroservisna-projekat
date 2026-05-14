@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 
-const BASE_URL = "https://localhost:7042";
+function joinUrl(baseUrl, ...segments) {
+  const cleanedBase = baseUrl.replace(/\/+$/, "");
+  const cleanedSegments = segments
+    .filter(Boolean)
+    .map((segment) => String(segment).replace(/^\/+|\/+$/g, ""));
+
+  return [cleanedBase, ...cleanedSegments].join("/");
+}
 
 function camelToLabel(str) {
   return str.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
@@ -8,8 +15,10 @@ function camelToLabel(str) {
 
 function ValueCell({ value }) {
   if (Array.isArray(value)) {
-    if (value.length === 0)
-      return <span className="text-stone-600 italic">—</span>;
+    if (value.length === 0) {
+      return <span className="text-stone-600 italic">-</span>;
+    }
+
     return (
       <div className="flex flex-wrap gap-1">
         {value.map((v, i) => (
@@ -23,13 +32,18 @@ function ValueCell({ value }) {
       </div>
     );
   }
-  if (value === null || value === undefined)
-    return <span className="text-stone-600 italic">—</span>;
+
+  if (value === null || value === undefined) {
+    return <span className="text-stone-600 italic">-</span>;
+  }
+
   if (typeof value === "boolean") return <span>{value ? "Yes" : "No"}</span>;
+
   if (typeof value === "string" && value.includes("T")) {
     const d = new Date(value);
-    if (!isNaN(d)) return <span>{d.toLocaleString()}</span>;
+    if (!Number.isNaN(d.getTime())) return <span>{d.toLocaleString()}</span>;
   }
+
   return <span>{String(value)}</span>;
 }
 
@@ -83,12 +97,10 @@ export default function EntityPage({ entity, onBack }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // GetById
   const [searchId, setSearchId] = useState("");
   const [searchResult, setSearchResult] = useState(null);
   const [searchError, setSearchError] = useState("");
 
-  // Modals
   const [showPost, setShowPost] = useState(false);
   const [showUpdate, setShowUpdate] = useState(false);
   const [updateId, setUpdateId] = useState("");
@@ -97,8 +109,9 @@ export default function EntityPage({ entity, onBack }) {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError("");
+
     try {
-      const res = await fetch(`${BASE_URL}/${entity.route}`);
+      const res = await fetch(joinUrl(entity.api.baseUrl, entity.api.path));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       setData(Array.isArray(json) ? json : []);
@@ -107,7 +120,7 @@ export default function EntityPage({ entity, onBack }) {
     } finally {
       setLoading(false);
     }
-  }, [entity.route]);
+  }, [entity.api.baseUrl, entity.api.path]);
 
   useEffect(() => {
     fetchAll();
@@ -121,10 +134,12 @@ export default function EntityPage({ entity, onBack }) {
 
   const handleSearch = async () => {
     if (!searchId) return;
+
     setSearchError("");
     setSearchResult(null);
+
     try {
-      const res = await fetch(`${BASE_URL}/${entity.route}/${searchId}`);
+      const res = await fetch(joinUrl(entity.api.baseUrl, entity.api.path, searchId));
       if (!res.ok) throw new Error(`Not found (HTTP ${res.status})`);
       const json = await res.json();
       setSearchResult(json);
@@ -136,21 +151,24 @@ export default function EntityPage({ entity, onBack }) {
   const handlePost = async () => {
     setSuccess("");
     setError("");
+
     try {
       const body = { ...formValues };
-      // coerce numbers
       entity.fields.request.forEach((f) => {
         if (entity.fieldTypes[f] === "number") body[f] = Number(body[f]);
       });
-      const res = await fetch(`${BASE_URL}/${entity.route}/add`, {
+
+      const res = await fetch(joinUrl(entity.api.baseUrl, entity.api.path, "add"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+
       if (!res.ok) {
         const txt = await res.text();
         throw new Error(txt || `HTTP ${res.status}`);
       }
+
       setSuccess("Record added successfully.");
       setShowPost(false);
       setFormValues({});
@@ -164,23 +182,24 @@ export default function EntityPage({ entity, onBack }) {
   const handleUpdate = async () => {
     setSuccess("");
     setError("");
+
     try {
       const body = { ...formValues };
       entity.fields.request.forEach((f) => {
         if (entity.fieldTypes[f] === "number") body[f] = Number(body[f]);
       });
-      const res = await fetch(
-        `${BASE_URL}/${entity.route}/update/${updateId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        },
-      );
+
+      const res = await fetch(joinUrl(entity.api.baseUrl, entity.api.path, "update", updateId), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
       if (!res.ok) {
         const txt = await res.text();
         throw new Error(txt || `HTTP ${res.status}`);
       }
+
       setSuccess(`Record #${updateId} updated successfully.`);
       setShowUpdate(false);
       setFormValues({});
@@ -197,13 +216,12 @@ export default function EntityPage({ entity, onBack }) {
   return (
     <main className="pt-14 min-h-screen">
       <div className="max-w-7xl mx-auto px-6 py-10">
-        {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <button
             onClick={onBack}
             className="text-stone-500 hover:text-amber-400 transition-colors text-sm flex items-center gap-1"
           >
-            ← Back
+            &larr; Back
           </button>
           <span className="text-stone-700">/</span>
           <h2
@@ -215,9 +233,11 @@ export default function EntityPage({ entity, onBack }) {
           </h2>
         </div>
 
-        {/* Toolbar */}
+        <p className="text-stone-500 text-xs tracking-widest uppercase mb-6">
+          API: {entity.api.baseUrl}/{entity.api.path}
+        </p>
+
         <div className="flex flex-wrap gap-3 mb-6">
-          {/* GetById */}
           <div className="flex gap-2">
             <input
               type="number"
@@ -253,17 +273,16 @@ export default function EntityPage({ entity, onBack }) {
             }}
             className="bg-stone-700 hover:bg-stone-600 text-stone-100 text-sm px-4 py-2 rounded-lg transition-colors border border-stone-600"
           >
-            ✎ Update by ID
+            Update by ID
           </button>
           <button
             onClick={fetchAll}
             className="bg-stone-800 hover:bg-stone-700 border border-stone-700 text-stone-300 text-sm px-4 py-2 rounded-lg transition-colors"
           >
-            ↺ Refresh
+            Refresh
           </button>
         </div>
 
-        {/* Alerts */}
         {success && (
           <div className="mb-4 px-4 py-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm">
             {success}
@@ -275,18 +294,17 @@ export default function EntityPage({ entity, onBack }) {
           </div>
         )}
 
-        {/* Search Result */}
         {searchResult && (
           <div className="mb-6 p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl">
             <div className="flex items-center justify-between mb-3">
               <span className="text-amber-400 text-xs tracking-widest uppercase font-medium">
-                Search Result — ID {searchId}
+                Search Result - ID {searchId}
               </span>
               <button
                 onClick={() => setSearchResult(null)}
                 className="text-stone-500 hover:text-stone-300 text-sm"
               >
-                ✕ Clear
+                Clear
               </button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -309,9 +327,8 @@ export default function EntityPage({ entity, onBack }) {
           </div>
         )}
 
-        {/* Table */}
         {loading ? (
-          <div className="text-stone-500 py-16 text-center">Loading…</div>
+          <div className="text-stone-500 py-16 text-center">Loading...</div>
         ) : data.length === 0 ? (
           <div className="text-stone-500 py-16 text-center border border-stone-800 rounded-2xl">
             No records found.
@@ -349,17 +366,11 @@ export default function EntityPage({ entity, onBack }) {
           </div>
         )}
 
-        <p className="text-stone-600 text-xs mt-3">
-          {data.length} record(s) loaded
-        </p>
+        <p className="text-stone-600 text-xs mt-3">{data.length} record(s) loaded</p>
       </div>
 
-      {/* POST Modal */}
       {showPost && (
-        <Modal
-          title={`Add New ${entity.label}`}
-          onClose={() => setShowPost(false)}
-        >
+        <Modal title={`Add New ${entity.label}`} onClose={() => setShowPost(false)}>
           <FormFields
             fields={entity.fields.request}
             fieldLabels={entity.fieldLabels}
@@ -384,12 +395,8 @@ export default function EntityPage({ entity, onBack }) {
         </Modal>
       )}
 
-      {/* UPDATE Modal */}
       {showUpdate && (
-        <Modal
-          title={`Update ${entity.label}`}
-          onClose={() => setShowUpdate(false)}
-        >
+        <Modal title={`Update ${entity.label}`} onClose={() => setShowUpdate(false)}>
           <div className="mb-4">
             <label className="block text-stone-400 text-xs mb-1 tracking-wide uppercase">
               Record ID to update
@@ -408,9 +415,7 @@ export default function EntityPage({ entity, onBack }) {
               fieldLabels={entity.fieldLabels}
               fieldTypes={entity.fieldTypes}
               values={formValues}
-              onChange={(f, v) =>
-                setFormValues((prev) => ({ ...prev, [f]: v }))
-              }
+              onChange={(f, v) => setFormValues((prev) => ({ ...prev, [f]: v }))}
             />
           </div>
           <div className="flex gap-3 mt-5">
@@ -432,3 +437,4 @@ export default function EntityPage({ entity, onBack }) {
     </main>
   );
 }
+

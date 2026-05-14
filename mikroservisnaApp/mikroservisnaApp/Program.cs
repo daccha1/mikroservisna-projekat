@@ -40,7 +40,7 @@ namespace mikroservisnaApp
 
 			builder.Services.AddHttpClient("LokacijaAPI", (client) =>
 			{
-				client.Timeout = TimeSpan.FromSeconds(5); // ne dobije se odgovor kroz 5 sekundi -> baca ex
+				client.Timeout = TimeSpan.FromSeconds(2); // ne dobije se odgovor kroz 5 sekundi -> baca ex
 				client.BaseAddress = new Uri(builder.Configuration["LokacijaAPI"]);
 			});
 

@@ -40,7 +40,7 @@ namespace EmailService.Services
 
 		public async Task SendMessage(NotifyPosetilac notification)
 		{
-			throw new Exception(">>> Namerni ex.");
+			//throw new Exception(">>> Namerni ex."); 
 
 			if (resendClient == null)
 			{

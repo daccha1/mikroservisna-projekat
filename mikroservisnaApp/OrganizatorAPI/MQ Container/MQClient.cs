@@ -69,7 +69,7 @@ namespace OrganizatorAPI.MQ_Container
             connection = await factory.CreateConnectionAsync();
             publishChannel = await connection.CreateChannelAsync();
 
-            #region locationExchange
+            
             await publishChannel.ExchangeDeclareAsync(
                     exchange: organizatorExchangeName,
                     type: ExchangeType.Direct,
@@ -137,7 +137,7 @@ namespace OrganizatorAPI.MQ_Container
 
                 await publishChannel.BasicPublishAsync(
                         organizatorExchangeName,
-                        routingKey: organizatorConsumeKey,
+                        routingKey: ea.BasicProperties.ReplyTo,
                         body: bodyResponse,
                         basicProperties: props,
                         mandatory: false
@@ -152,7 +152,7 @@ namespace OrganizatorAPI.MQ_Container
                     false,
                     consumer
                 );
-            #endregion
+           
 
 
             //await ReceiveMessageAsync();

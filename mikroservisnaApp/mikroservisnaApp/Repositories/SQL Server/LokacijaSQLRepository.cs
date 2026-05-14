@@ -52,6 +52,7 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 							  .WaitAndRetryAsync(2, retry =>
 							  {
 								  Debug.Write($">>>>>>> Current retry: {retry}");
+								  Console.Beep(); 
 								  return TimeSpan.FromSeconds(1);
 							  });
 
@@ -82,12 +83,14 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 							  .WaitAndRetryAsync(2, retry =>
 							  {
 								  Debug.WriteLine($"\n>>>>>>>>> Current retry: {retry}");
+								  Console.Beep();
 								  return TimeSpan.FromSeconds(1);
 							  });
 
 
 			var client = _HttpFactory.CreateClient("LokacijaAPI");
 
+			// logicnije: retry unutar circuit breakera (da racuna fejl tek kad svi retry-evi padnu
 			httpResponse = await retryPolicy.ExecuteAsync<HttpResponseMessage>(async () =>
 			{
 				try

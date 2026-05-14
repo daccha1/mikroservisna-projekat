@@ -35,6 +35,7 @@ namespace ProductsAPI.Controllers
 			{
 				return NotFound();
 			}
+			await Task.Delay(3000);
 			return Ok(lokacija);
 		}
 

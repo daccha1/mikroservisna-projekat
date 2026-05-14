@@ -31,7 +31,7 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 									return TimeSpan.FromSeconds(1);
 								});
 			// policy koji hendluje bacene HttpRequestException-e tako da na svaki ex tog tipa koji je neuspesan vrsi
-			// do navedenog broja retry-a, a izmedju svakog retry ceka 2s
+			// do navedenog broja retry-a, a izmedju svakog retry ceka 1s
 			// (ako predje navedeni broj retry-a baca exception dalje)
 
 			// testirano na timeout i kada je ugasen server (radi)

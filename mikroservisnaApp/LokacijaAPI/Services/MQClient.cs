@@ -135,7 +135,7 @@ namespace LokacijaAPI.Services
 
 				await publishChannel.BasicPublishAsync(
 						locationExchangeName,
-						routingKey: locationConsumeKey,
+						routingKey: ea.BasicProperties.ReplyTo,
 						body: bodyResponse,
 						basicProperties: props,
 						mandatory: false
