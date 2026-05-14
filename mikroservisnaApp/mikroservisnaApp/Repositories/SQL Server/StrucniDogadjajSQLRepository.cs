@@ -77,13 +77,13 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 		{
 			// lokacijaId, organizatorId, predavacId, tipId
 			var location = context.Lokacije.ToList().Exists(l => l.Id == dogadjaj.LokacijaId);
-			var organizator = context.Lokacije.ToList().Exists(o => o.Id == dogadjaj.OrganizatorId);
-			var tip = context.Lokacije.ToList().Exists(t => t.Id == dogadjaj.TipId);
+			var organizator = context.Organizatori.ToList().Exists(o => o.Id == dogadjaj.OrganizatorId);
+			var tip = context.TipoviDogadjaja.ToList().Exists(t => t.Id == dogadjaj.TipId);
 			var predavac = true;
 
 			foreach(var p in dogadjaj.Predavaci)
 			{
-				var postojiPredavac = context.Lokacije.ToList().Exists(pr => pr.Id == p.PredavacId);
+				var postojiPredavac = context.Predavaci.ToList().Exists(pr => pr.Id == p.PredavacId);
 				if(postojiPredavac == false)
 				{
 					predavac = false;
@@ -263,7 +263,7 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 		string locationRoutingKey = "location-publish-key";
 
 		string locationConsumeQueue = "events.location.consumeQueue";
-		string locationConsumeKey = "location-consume-key";
+		string locationConsumeKey = "location-consume-key"; 
 
 		// organizator
 		string organizatorExchangeName = "events.organizer.organizerExchange";

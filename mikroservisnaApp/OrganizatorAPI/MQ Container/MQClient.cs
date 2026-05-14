@@ -85,7 +85,7 @@ namespace OrganizatorAPI.MQ_Container
             await publishChannel.QueueBindAsync(
                     queue: organizatorQueueName,
                     exchange: organizatorExchangeName,
-                    routingKey: "location-publish-key"
+                    routingKey: organizatorRoutingKey
                 );
 
             await publishChannel.QueueDeclareAsync(
@@ -98,7 +98,7 @@ namespace OrganizatorAPI.MQ_Container
             await publishChannel.QueueBindAsync(
                     queue: organizatorConsumeQueue,
                     exchange: organizatorExchangeName,
-                    routingKey: "location-consume-key"
+                    routingKey: organizatorConsumeKey
                 );
 
             consumer = new AsyncEventingBasicConsumer(publishChannel);
