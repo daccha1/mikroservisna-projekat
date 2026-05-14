@@ -94,8 +94,20 @@ namespace PosetilacSagaOrkestrator.Services.MQ_Container
 					routingKey: emailServiceRouting
 				);
 
-		}
+			// queue: finalni reply pocetnom servisu za transakciju
+			await _channel.QueueDeclareAsync(
+					queue: posetilacServiceConsumeQueue,
+					durable: false,
+					exclusive: false,
+					autoDelete: false
+				);
+			await _channel.QueueBindAsync(
+					queue: posetilacServiceConsumeQueue,
+					exchange: exchangeName,
+					routingKey: posetilacServiceConsumeRouting
+				);
 
+		}
 
 		public async Task Publish(string routingKeyString, string payload)
 		{
@@ -154,6 +166,9 @@ namespace PosetilacSagaOrkestrator.Services.MQ_Container
 
 		public string emailServiceQueue = "events.email.notify-posetilac";
 		public string emailServiceRouting = "notify-posetilac";
+
+		public string posetilacServiceConsumeQueue = "events.posetilac.transaction-consume-queue";
+		public string posetilacServiceConsumeRouting = "transaction-final-feedback";
 
 	}
 }

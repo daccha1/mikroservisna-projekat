@@ -1,6 +1,9 @@
 ﻿	using Common.Saga_Contracts;
-	using RabbitMQ.Client;
-	using System.Text;
+using PosetilacAPI.Data;
+using PosetilacAPI.Models;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
+using System.Text;
 	using System.Text.Json;
 	using System.Text.Json.Serialization;
 
@@ -25,8 +28,14 @@
 			public string pubPosetilacCreated = "events.orch.pos-creation";
 			public string pubPosetilacRouting = "create-posetilac";
 
+			public string posetilacServiceConsumeQueue = "events.posetilac.transaction-consume-queue";
+			public string posetilacServiceConsumeRouting = "transaction-final-feedback";
 
-			//public string subGiftQueue = "events.orch.gift.send";
+			private IServiceScopeFactory _scopeFactory;
+			public MQClient(IServiceScopeFactory scopeFactory)
+			{
+				_scopeFactory = scopeFactory;
+			}
 
 			public async Task SendMessage(PosetilacCreated evt)
 			{
@@ -86,7 +95,56 @@
 						exchange: exchangeName,
 						routingKey: pubPosetilacRouting
 					);
+
+				// final transaction state queue
+
+				await channel.QueueDeclareAsync(
+					queue: posetilacServiceConsumeQueue,
+					durable: false,
+					exclusive: false,
+					autoDelete: false
+				);
+
+				await channel.QueueBindAsync(
+						queue: posetilacServiceConsumeQueue,
+						exchange: exchangeName,
+						routingKey: posetilacServiceConsumeRouting
+					);
+
+				var consumer = new AsyncEventingBasicConsumer(channel);
+
+				consumer.ReceivedAsync += async (_, ea) =>
+				{
+					using var scope = _scopeFactory.CreateScope();
+					var db = scope.ServiceProvider.GetService<PosetilacDbContext>();
+
+					var jsonString = Encoding.UTF8.GetString(ea.Body.Span);
+					TransactionFinalState? tfs = JsonSerializer.Deserialize<TransactionFinalState>(jsonString);
+
+					SagaResultOutboxMessage msg = new()
+					{
+						CorrelationId = tfs.CorrelationId,
+						FinalState = (tfs.TranscationStatus == FinalTransactionState.Successful ? State.Success : State.Fail),
+						OutboxState = OutboxState.ForProcessing
+					};
+
+					await db.SagaResultOutbox.AddAsync(msg);
+					await db.SaveChangesAsync();
+
+					await channel.BasicAckAsync(
+							deliveryTag: ea.DeliveryTag,
+							multiple: false
+						);
+				};
+
+			await channel.BasicConsumeAsync(
+					queue: posetilacServiceConsumeQueue,
+					autoAck: false,
+					consumer
+				);
 				
 			}
+
+
 		}
 	}

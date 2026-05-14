@@ -2,6 +2,7 @@ using PosetilacAPI.Contracts;
 using PosetilacAPI.Data;
 using PosetilacAPI.MQ_Container;
 using PosetilacAPI.Repositories;
+using PosetilacAPI.Services;
 
 namespace PosetilacAPI
 {
@@ -15,6 +16,7 @@ namespace PosetilacAPI
 
             builder.Services.AddSingleton<IMQClient, MQClient>();
             builder.Services.AddHostedService<MQInitializer>();
+            builder.Services.AddHostedService<OutboxBackgroundService>();
 
             builder.Services.AddScoped<IPosetilac, PosetilacSQLRepository>();
             builder.Services.AddControllers();

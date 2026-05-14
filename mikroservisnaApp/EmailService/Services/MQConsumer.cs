@@ -29,10 +29,15 @@ namespace EmailService.Services
 		string exchangeName = "events.event.eventsExchange";
 		string queueName = "events.event.publishQueue";
 
+		// exch za saga orkestrator
 		private string sagaExchangeName = "saga-exchange";
 
 		public string emailServiceQueue = "events.email.notify-posetilac";
 		public string emailServiceRouting = "notify-posetilac";
+
+		// queue na koji saljemo mejlove >>> "saga-exchange";
+		public string orchConsumeQueue = "events.orch.consume-queue";
+		public string orchConsumeRouting = "notification-sent";
 
 		private IServiceScopeFactory _scopeFactory;
 		
@@ -40,7 +45,6 @@ namespace EmailService.Services
 		{
 			_scopeFactory = scopeFactory;
 		}
-
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
@@ -113,6 +117,20 @@ namespace EmailService.Services
 							routingKey: emailServiceRouting
 						);
 
+					// publish notifikacije nazad orkestratoru
+
+					await channel.QueueDeclareAsync(
+							queue: orchConsumeQueue,
+							durable: false,
+							exclusive: false,
+							autoDelete: false
+						);
+					await channel.QueueBindAsync(
+							queue: orchConsumeQueue,
+							exchange: sagaExchangeName,
+							routingKey: orchConsumeRouting
+						);
+
 
 					// CONSUMER KOJI OSLUSKUJE KREIRANJE NOVOG EVENTA (event <=> strucni dogadjaj)
 					var consumerEventCreated = new AsyncEventingBasicConsumer(channel);
@@ -120,19 +138,23 @@ namespace EmailService.Services
 					{
 						await HandleEventMessageAsync(ea, stoppingToken);
 					};
-
 					await channel.BasicConsumeAsync(queueName, autoAck: false, consumerEventCreated);
+
 
 					// CONSUMER KOJI OSLUSKUJE SAGA EVENT: Slanje notifikacije posetiocu
 					var consumerPosetilacNotification = new AsyncEventingBasicConsumer(channel);
 					consumerPosetilacNotification.ReceivedAsync += async (_, ea) =>
 					{
-						await HandlePosetilacNotification(ea, stoppingToken);
+						try
+						{
+							await HandlePosetilacNotification(ea, stoppingToken);
+						}
+						catch (Exception) {}
 					};
 					await channel.BasicConsumeAsync(emailServiceQueue, autoAck: false, consumerPosetilacNotification);
-					
-					Console.WriteLine("Consumer is listening!");
 
+
+					Console.WriteLine("Consumer is listening...");
 					await Task.Delay(Timeout.Infinite, stoppingToken);
 				}
 				catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -141,12 +163,13 @@ namespace EmailService.Services
 				}
 				catch (Exception ex)
 				{
-					Console.WriteLine("MQ consumer restart in 5s: " + ex.Message);
+					Console.WriteLine("MQ restart in 5s: " + ex.Message);
 					await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
 				}
 			}
 		}
 
+		
 		private async Task HandlePosetilacNotification(BasicDeliverEventArgs ea, CancellationToken stoppingToken)
 		{
 			using var scope = _scopeFactory.CreateScope();
@@ -164,27 +187,71 @@ namespace EmailService.Services
 			if(exist != null)
 			{
 				Console.WriteLine("Vec postoji mejl kojim je obavesten dati klijent.");
-				Console.WriteLine("-- OTKAZIVANJE PORUKE --");
+				Console.WriteLine("----- OTKAZIVANJE PORUKE -----");
 				await channel.BasicAckAsync(ea.DeliveryTag, false);
 				return;
 			}
 
-			await EmailSenderClient.Instance.SendMessage(notification);
 
-			var processedMessage = new ProcessedMessage()
+			try
 			{
-				CorrelationId = notification.CorrelationId,
-				ProcessedTime = DateTime.UtcNow,
-				EventId = $"{notification.CorrelationId}"
-			};
-			Console.WriteLine($"Sacuvan mejl za CorrelationID: {notification.CorrelationId}");
+				await EmailSenderClient.Instance.SendMessage(notification);
 
-			await db.ProcessedMessages.AddAsync(processedMessage);
-			await db.SaveChangesAsync();
-			await channel.BasicAckAsync(ea.DeliveryTag, false);
+				NotifyOrchestratorEvent notifyOrch = new()
+				{
+					EventType = EventType.NotificationEvent,
+					CorrelationId = notification.CorrelationId,
+					NotificationStatus = NotificationStatus.Sent
+				};
 
+				byte[] successNotification = Encoding.UTF8.GetBytes(JsonSerializer.Serialize<NotifyOrchestratorEvent>(notifyOrch));
+
+				await channel.BasicPublishAsync(
+						exchange: sagaExchangeName,
+						routingKey: orchConsumeRouting,
+						body: successNotification
+					);
+
+				var processedMessage = new ProcessedMessage()
+				{
+					CorrelationId = notification.CorrelationId,
+					ProcessedTime = DateTime.UtcNow,
+					EventId = $"{notification.CorrelationId}"
+				};
+
+				Console.WriteLine($"Sacuvan mejl za CorrelationID: {notification.CorrelationId}");
+
+				await db.ProcessedMessages.AddAsync(processedMessage);
+				await db.SaveChangesAsync();
+			}
+			catch (Exception e)
+			{
+				// nije uspelo
+				Console.WriteLine(e.Message);
+				NotifyOrchestratorEvent failedMailNotification = new()
+				{
+					EventType = EventType.NotificationEvent,
+					CorrelationId = notification.CorrelationId,
+					NotificationStatus = NotificationStatus.Failed
+				};
+
+				var jsonString = JsonSerializer.Serialize<NotifyOrchestratorEvent>(failedMailNotification);
+				byte[] failedNotification = Encoding.UTF8.GetBytes(jsonString);
+
+				await channel.BasicPublishAsync(
+						exchange: sagaExchangeName,
+						routingKey: orchConsumeRouting,
+						body: failedNotification
+				);
+
+			}
+			finally
+			{
+				await channel.BasicAckAsync(ea.DeliveryTag, false);
+			}
 		}
 
+		// metoda koja salje mejl kada se kreira novi event (strucni dogadjaj)
 		private async Task HandleEventMessageAsync(BasicDeliverEventArgs ea, CancellationToken stoppingToken)
 		{
 			try
@@ -255,7 +322,7 @@ namespace EmailService.Services
 		{
 			var currentMoment = DateTime.UtcNow;
 			
-			//      ako je default vrednost      ||     u trenutku uzimanja poruke, prosao minut
+			//      ako je default value           u trenutku uzimanja poruke, prosao minut
 			if(_windowStart == DateTime.MinValue || currentMoment - _windowStart >= RateLimitWindow)
 			{
 				_windowStart = currentMoment;

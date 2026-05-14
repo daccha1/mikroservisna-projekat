@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PosetilacAPI.Data;
 
@@ -11,9 +12,11 @@ using PosetilacAPI.Data;
 namespace PosetilacAPI.Migrations
 {
     [DbContext(typeof(PosetilacDbContext))]
-    partial class PosetilacDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260513191338_Added-SagaResult-Message")]
+    partial class AddedSagaResultMessage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -121,9 +124,6 @@ namespace PosetilacAPI.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("FinalState")
-                        .HasColumnType("int");
-
-                    b.Property<int>("OutboxState")
                         .HasColumnType("int");
 
                     b.HasKey("Id");

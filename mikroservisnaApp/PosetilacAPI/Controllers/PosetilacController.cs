@@ -48,6 +48,8 @@ namespace PosetilacAPI.Controllers
             return Ok(isAdded);
         }
 
+        // implementiraj getByCorrelationId
+
         [HttpPut("update/{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] PosetilacRequestDTO posetilacToUpdate)
         {

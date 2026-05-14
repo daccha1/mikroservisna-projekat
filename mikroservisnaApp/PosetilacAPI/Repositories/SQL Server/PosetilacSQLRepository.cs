@@ -74,7 +74,12 @@ namespace PosetilacAPI.Repositories
             };
 
             await _mqClient.SendMessage(posetilacCreatedEvent);
-            context.Posetioci.Add(noviPosetilac);
+
+			// publishujemo poruku --> ...saga...
+			//                     <-- response
+			// ^ pokrenemo save u contextu za posetioca        
+
+			context.Posetioci.Add(noviPosetilac);
 			int isAdded = await context.SaveChangesAsync();
 
 			if (isAdded != 0)

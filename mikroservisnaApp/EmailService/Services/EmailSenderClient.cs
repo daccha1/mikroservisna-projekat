@@ -40,16 +40,18 @@ namespace EmailService.Services
 
 		public async Task SendMessage(NotifyPosetilac notification)
 		{
+			throw new Exception(">>> Namerni ex.");
+
 			if (resendClient == null)
 			{
 				Console.WriteLine("Resend client is not initialized.");
 				return;
 			}
-			
+
 			var response = await resendClient.EmailSendAsync(new EmailMessage
 			{
 				From = "david@dachadev.xyz",
-				To = ["ilijazeljkovic1312@gmail.com", $"{notification.Email}"],
+				To = [$"{notification.Email}"],
 				Subject = "Dobrodošli na event!",
 				HtmlBody = $"<p> Uspešno ste prijavljeni na event!  <strong> Vaš vaučer je: {notification.CorrelationId} </strong>!</p>",
 			});

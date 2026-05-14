@@ -23,5 +23,6 @@ namespace PosetilacAPI.Data
         }
 
         public DbSet<Posetilac> Posetioci { get; set; }
+        public DbSet<SagaResultOutboxMessage> SagaResultOutbox { get; set; }
     }
 }

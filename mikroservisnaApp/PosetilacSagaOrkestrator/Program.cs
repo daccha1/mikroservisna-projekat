@@ -12,7 +12,8 @@ namespace PosetilacSagaOrkestrator
 		{
 			_ = Task.Run(() => MessageDispatcher.DispatchGiftPosetilacOutboxMessage());
 			_ = Task.Run(() => MessageDispatcher.DispatchNotificationOutboxMessage());
-
+			_ = Task.Run(() => MessageDispatcher.DispatchTransactionOutboxMessage());
+			
 			// uhvati poruku da je kreiran posetilac
 			// kreiramo inicijalni state, outbox state, i bg workera
 			// publishujemo na GiftService, generise se gift vraca na queue

@@ -16,10 +16,10 @@ namespace EmailService
 		static async Task Main(string[] args)
 		{
 			var host = Host.CreateDefaultBuilder(args)
-						   .ConfigureServices(services =>
+						   .ConfigureServices(services =>		
 							{
 								services.AddHostedService<MQConsumer>();
-								services.AddDbContext<EmailServiceDbContext>(options =>
+								services.AddDbContext<EmailServiceDbContext>(options => // premesti u dbContext da resis ove gluposti
 								{
 									options.UseSqlServer(@"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=EmailServiceDb;Integrated Security=True;Connect Timeout=30;Encrypt=True;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False;Command Timeout=30");
 								});
@@ -28,9 +28,6 @@ namespace EmailService
 						   .Build();
 
 			await host.RunAsync();
-
-
-
 
 
 			Console.WriteLine("Upisi nesto za kraj");

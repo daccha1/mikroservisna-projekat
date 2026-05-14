@@ -12,7 +12,7 @@ namespace PosetilacSagaOrkestrator.Services.MQ_Container
 {
 	public static class MessageDispatcher
 	{
-		public async static void DispatchGiftPosetilacOutboxMessage()
+		public async static void DispatchGiftPosetilacOutboxMessage() // DISPATCHER ZA GIFT SERVICE | I 
 		{
 			while (true)
 			{
@@ -63,7 +63,7 @@ namespace PosetilacSagaOrkestrator.Services.MQ_Container
 			}
 		}
 
-		public async static void DispatchNotificationOutboxMessage()
+		public async static void DispatchNotificationOutboxMessage() // DISPATCHER ZA NOTIFICATION SERVICE | II
 		{
 			while (true)
 			{
@@ -102,6 +102,36 @@ namespace PosetilacSagaOrkestrator.Services.MQ_Container
 				dbSaga.NotificationsOutboxMessages.Update(outboxMsg);
 				await dbSaga.SaveChangesAsync();
 
+				await Task.Delay(3000);
+			}
+		}
+		
+		internal static async void DispatchTransactionOutboxMessage() // DISPATCHER ZA FINALNI FEEDBACK U SAGI
+		{	
+			while (true)
+			{
+				var dbSaga = new PosetilacOrkestratorDbContext();
+				var transactionMsg = await dbSaga.TransactionConfirmationOutboxMessages.Where(msg => msg.MessageStatus == TransactionMessageStatus.ForProcessing).FirstOrDefaultAsync();
+
+				if(transactionMsg == null)
+				{
+					await Task.Delay(3000);
+					continue;
+				}
+
+				// mapiranje u contract klasu
+				TransactionFinalState transactionState = new()
+				{
+					CorrelationId = transactionMsg.CorrelationId,
+					TranscationStatus = (transactionMsg.TransactionStatus == TransactionStatus.Successful ? FinalTransactionState.Successful : FinalTransactionState.Failed)
+				};
+				
+				MQClient client = new();
+				await client.Publish("transaction-final-feedback", JsonSerializer.Serialize<TransactionFinalState>(transactionState));
+
+				transactionMsg.MessageStatus = TransactionMessageStatus.Processed;
+				dbSaga.TransactionConfirmationOutboxMessages.Update(transactionMsg);
+				await dbSaga.SaveChangesAsync();
 				await Task.Delay(3000);
 			}
 		}

@@ -20,7 +20,9 @@ namespace Common.Saga_Contracts
 
 	public enum NotificationStatus
 	{
-
+		Sent,
+		Failed,
+		None
 	}
 
 	public class NotifyOrchestratorEvent
@@ -30,6 +32,7 @@ namespace Common.Saga_Contracts
 		public Guid CorrelationId { get; set; }
 		public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 		public GiftStatus GiftStatus { get; set; } = GiftStatus.None;
+		public NotificationStatus NotificationStatus { get; set; } = NotificationStatus.None;
 
 
 	}
