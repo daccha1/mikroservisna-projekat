@@ -8,6 +8,7 @@ using Polly;
 using System.Diagnostics;
 using System.Net;
 using System.Reflection.Metadata.Ecma335;
+using Common.EventService;
 
 namespace mikroservisnaApp.Repositories.SQL_Server
 {

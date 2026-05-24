@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace mikroservisnaApp.Models
+namespace Common.EventService
 {
     [Table("Predavac")]
     public class Predavac

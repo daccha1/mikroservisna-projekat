@@ -37,11 +37,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="CQRS Container\Application\Queries\" />
     <Folder Include="Migrations\" />
+    <Folder Include="Models\CQRS Domain %28StrucniDogadjaj%29\" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\ContractsCQRS\ContractsCQRS.csproj" />
+    <ProjectReference Include="..\StrucniDogadjaj.Infrastructure.Read.EFCore\StrucniDogadjaj.Infrastructure.Read.EFCore.csproj" />
+    <ProjectReference Include="..\StrucniDogadjaj.Infrastructure.Write.EFCore\StrucniDogadjaj.Infrastructure.Write.EFCore.csproj" />
   </ItemGroup>
 
 </Project>

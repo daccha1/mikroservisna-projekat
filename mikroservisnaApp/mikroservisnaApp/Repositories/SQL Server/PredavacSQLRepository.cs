@@ -3,6 +3,7 @@ using mikroservisnaApp.Contracts;
 using mikroservisnaApp.Data;
 using mikroservisnaApp.Models;
 using mikroservisnaApp.Models.DTO.PredavacDTO;
+using Common.EventService;
 
 namespace mikroservisnaApp.Repositories.SQL_Server
 {

@@ -1,13 +1,19 @@
-﻿using Common.StrucniDogadjajDTO;
+﻿using Common.EventService;
+using Common.StrucniDogadjajDTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
 using mikroservisnaApp.Contracts;
+using mikroservisnaApp.CQRS_Container.Application.Commands;
 using mikroservisnaApp.Models;
 using mikroservisnaApp.Models.DTO;
 using mikroservisnaApp.Models.DTO.StrucniDogadjajDTO;
 using mikroservisnaApp.MQ_Container;
 using mikroservisnaApp.Repositories.SQL_Server;
+using StrucniDogadjaj.Domain.Write;
+using StrucniDogadjaj.Infrastructure.Read.EFCore.Data;
+using StrucniDogadjaj.Infrastructure.Write.EFCore.Data;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -20,21 +26,32 @@ namespace mikroservisnaApp.Controllers
 	{
 		private IStrucniDogadjaj _repository;
 		private IMQClient _mqPublisher;
-		public StrucniDogadjajController(IStrucniDogadjaj repository, IMQClient mqPublisher)
+		private WriteDbContext _write;
+		private AddDogadjajCommandHandler _addDogadjajHandler;
+		private ReadDbContext _read;
+		public StrucniDogadjajController(IStrucniDogadjaj repository, IMQClient mqPublisher, WriteDbContext write, ReadDbContext read, AddDogadjajCommandHandler handler)
 		{
 			_mqPublisher = mqPublisher;
 			_repository = repository;
+			_write = write;
+			_addDogadjajHandler = handler;
+			_read = read;
 		}
 
 		[HttpGet("")]
 		public async Task<IActionResult> GetAll()
 		{
-			var events = await _repository.GetAll();
-			if(events.Count == 0)
-			{
-				return NotFound("Trenutno nema dogadjaja.");
-			}
-			return Ok(events);
+			//var events = await _repository.GetAll();
+			//if (events.Count == 0)
+			//{
+			//	return NotFound("Trenutno nema dogadjaja.");
+			//}
+			//return Ok(events);
+
+			await _read.Dogadjaji.ToListAsync();
+
+			return Ok(await _read.Dogadjaji.ToListAsync());
+
 		}
 
 
@@ -51,16 +68,21 @@ namespace mikroservisnaApp.Controllers
 		}
 
 		[HttpPost("add")]
-		public async Task<IActionResult> Post([FromBody] StrucniDogadjajRequestDTO addEvent)
+		public async Task<IActionResult> Post([FromBody] AddDogadjajCommand dogadjaj)
 		{
-			var newEvent = await _repository.Post(addEvent);
-			if(newEvent == null)
-			{
-				return NotFound("Nije uspelo dodavanje dogadjaja.");
-			}
-			//string jsonBody = JsonSerializer.Serialize<StrucniDogadjajRequestDTO>(addEvent);
-			//await _mqPublisher.SendMessageAsync(jsonBody, "events.event.eventsExchange", "event-publish-key");
-			return Ok(newEvent);
+
+			int idDogadjaja = await _addDogadjajHandler.Handle(dogadjaj);
+
+			return Ok(idDogadjaja);
+
+			//var newEvent = await _repository.Post(addEvent);
+			//if(newEvent == null)
+			//{
+			//	return NotFound("Nije uspelo dodavanje dogadjaja.");
+			//}
+			////string jsonBody = JsonSerializer.Serialize<StrucniDogadjajRequestDTO>(addEvent);
+			////await _mqPublisher.SendMessageAsync(jsonBody, "events.event.eventsExchange", "event-publish-key");
+			//return Ok(newEvent);
 		}
 
 		[HttpPut("update/{id}")]

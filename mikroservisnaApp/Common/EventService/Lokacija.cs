@@ -1,7 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
-namespace mikroservisnaApp.Models
+namespace Common.EventService
 {
     [Table("Lokacija")]
     public class Lokacija

@@ -12,6 +12,7 @@ using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Text;
 using System.Text.Json;
+using Common.EventService;
 
 namespace mikroservisnaApp.Repositories.SQL_Server
 {
@@ -116,7 +117,7 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 
             #region locationHandler
             string lokacijaId = Convert.ToString(dogadjaj.LokacijaId);
-			var signal = new SemaphoreSlim(0, 1);
+			var signal = new SemaphoreSlim(0, 1);	
             EventHandler<string> handler = null;
             handler = (_, args) =>
             {
@@ -140,7 +141,7 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 			{
 				return null;
 			}
-            #endregion
+            #endregion			
 
 
             string organizatorId = Convert.ToString(dogadjaj.OrganizatorId);
@@ -171,7 +172,7 @@ namespace mikroservisnaApp.Repositories.SQL_Server
             using var transaction = await context.Database.BeginTransactionAsync();
             try
 			{
-                StrucniDogadjaj eventToAdd = new()
+				Common.EventService.StrucniDogadjaj eventToAdd = new()
                 {
                     Agenda = dogadjaj.Agenda,
                     Cena = dogadjaj.Cena,
@@ -213,7 +214,7 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 
 		}
 
-		public StrucniDogadjaj updateEvent(StrucniDogadjajRequestDTO updatedEvent, StrucniDogadjaj updateEvent)
+		public Common.EventService.StrucniDogadjaj updateEvent(StrucniDogadjajRequestDTO updatedEvent, Common.EventService.StrucniDogadjaj updateEvent)
 		{
 			updateEvent.Naziv = updatedEvent.Naziv;
 			updateEvent.Agenda = updatedEvent.Agenda;
@@ -234,7 +235,7 @@ namespace mikroservisnaApp.Repositories.SQL_Server
 		}
 		public async Task<bool> Update(int idEvent, StrucniDogadjajRequestDTO updatedEvent)
 		{
-			StrucniDogadjaj eventToUpdate = await context.Dogadjaji.Where(d => d.Id == idEvent).FirstAsync();
+			Common.EventService.StrucniDogadjaj eventToUpdate = await context.Dogadjaji.Where(d => d.Id == idEvent).FirstAsync();
 			
 			if(updateEvent == null)
 			{

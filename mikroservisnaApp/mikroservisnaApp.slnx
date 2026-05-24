@@ -1,4 +1,17 @@
 <Solution>
+  <Folder Name="/CQRS Container/" />
+  <Folder Name="/CQRS Container/StrucniDogadjaj/" />
+  <Folder Name="/CQRS Container/StrucniDogadjaj/Domain/">
+    <Project Path="StrucniDogadjaj.Domain.Read/StrucniDogadjaj.Domain.Read.csproj" Id="49f7bdac-cbbe-4689-b283-66400cb489e7" />
+    <Project Path="StrucniDogadjaj.Domain.Write/StrucniDogadjaj.Domain.Write.csproj" Id="944910e0-83ec-46b1-9d97-d3b655941856" />
+  </Folder>
+  <Folder Name="/CQRS Container/StrucniDogadjaj/Infrastructure/">
+    <Project Path="StrucniDogadjaj.Infrastructure.Read.EFCore/StrucniDogadjaj.Infrastructure.Read.EFCore.csproj" Id="4d57dbe4-a61e-4c35-b5de-4cbc36f67294" />
+    <Project Path="StrucniDogadjaj.Infrastructure.Write.EFCore/StrucniDogadjaj.Infrastructure.Write.EFCore.csproj" Id="dc156bdb-4169-4cd5-8638-35b5e9dd14c9" />
+  </Folder>
+  <Folder Name="/CQRS Container/StrucniDogadjaj/Repositories/">
+    <Project Path="ContractsCQRS/ContractsCQRS.csproj" Id="95e5921a-2966-40fe-9409-42f825d60105" />
+  </Folder>
   <Project Path="Common/Common.csproj" Id="0d0df27f-ef2d-46f9-a11d-9c0dfa74d06a" />
   <Project Path="EmailService/EmailService.csproj" Id="95ff323b-6f05-4df1-b8f6-b38fad5bc4c8" />
   <Project Path="GiftService/GiftService.csproj" Id="4918a959-cd05-45ec-a0a6-4f6dbc657105" />

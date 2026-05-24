@@ -1,19 +1,21 @@
 ﻿using Common;
 using Common.StrucniDogadjajDTO;
+using Common.EventService;
 using Microsoft.EntityFrameworkCore;
 using mikroservisnaApp.Models;
+using Common.EventService;
 
 namespace mikroservisnaApp.Data
 {
     public class DogadjajiDbContext : DbContext
     {
-        public DogadjajiDbContext(DbContextOptions options) : base(options) {}
+        public DogadjajiDbContext(DbContextOptions<DogadjajiDbContext> options) : base(options) {}
 
         protected DogadjajiDbContext() {}
 
         public DbSet<Lokacija> Lokacije{ get; set; }
         public DbSet<Predavac> Predavaci { get; set; }
-        public DbSet<StrucniDogadjaj> Dogadjaji { get; set; }
+        public DbSet<Common.EventService.StrucniDogadjaj> Dogadjaji { get; set; }
         public DbSet<Organizator> Organizatori { get; set; }
         public DbSet<TipDogadjaja> TipoviDogadjaja { get; set; }
         public DbSet<DogadjajPredavac> DogPreds{ get; set; }
@@ -58,8 +60,8 @@ namespace mikroservisnaApp.Data
 			);
 
 			// StrucniDogadjaj
-			modelBuilder.Entity<StrucniDogadjaj>().HasData(
-				new StrucniDogadjaj
+			modelBuilder.Entity<Common.EventService.StrucniDogadjaj>().HasData(
+				new Common.EventService.StrucniDogadjaj
 				{
 					Id = 1,
 					Naziv = "AI Summit Srbija 2025",
@@ -71,7 +73,7 @@ namespace mikroservisnaApp.Data
 					OrganizatorId = 1,
 					TipId = 1
 				},
-				new StrucniDogadjaj
+				new Common.EventService.StrucniDogadjaj
 				{
 					Id = 2,
 					Naziv = "Web Dev Radionica",
@@ -83,7 +85,7 @@ namespace mikroservisnaApp.Data
 					OrganizatorId = 2,
 					TipId = 2
 				},
-				new StrucniDogadjaj
+				new Common.EventService.StrucniDogadjaj
 				{
 					Id = 3,
 					Naziv = "Baze Podataka — napredne tehnike",

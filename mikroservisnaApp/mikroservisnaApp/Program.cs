@@ -7,17 +7,33 @@ using mikroservisnaApp.Patterns;
 using mikroservisnaApp.Repositories.SQL_Server;
 using mikroservisnaApp.Services.HostedServices;
 using System.Text.Json.Serialization;
+using StrucniDogadjaj.Infrastructure.Write.EFCore.Data;
+using StrucniDogadjaj.Infrastructure.Read.EFCore.Data;
+using ContractsCQRS;
+using mikroservisnaApp.CQRS_Container.Application.Repositories;
+using mikroservisnaApp.CQRS_Container.Application.Commands;
 
 namespace mikroservisnaApp
 {
     public class Program
     {
-        public static void Main(string[] args)
+		private WriteDbContext _dbContext;
+		public Program(WriteDbContext dbContext)
+		{
+			_dbContext = dbContext;
+		}
+
+		public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddSqlServer<DogadjajiDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
+			builder.Services.AddSqlServer<ReadDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
+			builder.Services.AddSqlServer<WriteDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
 
+			builder.Services.AddTransient<IDogadjajWriteRepository, DogadjajWriteRepository>();
+			builder.Services.AddScoped<AddDogadjajCommandHandler>();
+			
 			builder.Services.Configure<HostOptions>(opt =>
 			{
 				opt.StartupTimeout = TimeSpan.FromSeconds(10);

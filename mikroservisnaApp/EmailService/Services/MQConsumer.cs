@@ -49,6 +49,7 @@ namespace EmailService.Services
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
 			Console.WriteLine("Pokrenut je servis!");
+			
 			EmailSenderClient.Instance.StartClient();
 
 			while (!stoppingToken.IsCancellationRequested)
@@ -323,12 +324,13 @@ namespace EmailService.Services
 			var currentMoment = DateTime.UtcNow;
 			
 			//      ako je default value           u trenutku uzimanja poruke, prosao minut
-			if(_windowStart == DateTime.MinValue || currentMoment - _windowStart >= RateLimitWindow)
+			if(_windowStart == DateTime.MinValue || currentMoment - _windowStart >= RateLimitWindow) // restartujemo window
 			{
 				_windowStart = currentMoment;
 				_processedThroughWindow = 0;
 			}
 
+			// netacno ako stigne 11 poruka
 			if(_processedThroughWindow < MaxMessagesPerWindow)
 			{
 				_processedThroughWindow++;
