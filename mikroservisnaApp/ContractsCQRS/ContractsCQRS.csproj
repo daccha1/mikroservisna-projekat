@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Common\Common.csproj" />
+    <ProjectReference Include="..\StrucniDogadjaj.Domain.Read\StrucniDogadjaj.Domain.Read.csproj" />
     <ProjectReference Include="..\StrucniDogadjaj.Domain.Write\StrucniDogadjaj.Domain.Write.csproj" />
   </ItemGroup>
 

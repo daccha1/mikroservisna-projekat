@@ -37,7 +37,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="CQRS Container\Application\Queries\" />
     <Folder Include="Migrations\" />
     <Folder Include="Models\CQRS Domain %28StrucniDogadjaj%29\" />
   </ItemGroup>

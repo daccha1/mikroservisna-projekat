@@ -12,6 +12,7 @@ using StrucniDogadjaj.Infrastructure.Read.EFCore.Data;
 using ContractsCQRS;
 using mikroservisnaApp.CQRS_Container.Application.Repositories;
 using mikroservisnaApp.CQRS_Container.Application.Commands;
+using mikroservisnaApp.CQRS_Container.Application.Queries;
 
 namespace mikroservisnaApp
 {
@@ -32,8 +33,16 @@ namespace mikroservisnaApp
 			builder.Services.AddSqlServer<WriteDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
 
 			builder.Services.AddTransient<IDogadjajWriteRepository, DogadjajWriteRepository>();
+			builder.Services.AddTransient<IDogadjajReadRepository, DogadjajReadRepository>();
+
 			builder.Services.AddScoped<AddDogadjajCommandHandler>();
-			
+			builder.Services.AddScoped<EditDogadjajCommandHandler>();
+			builder.Services.AddScoped<DeleteDogadjajCommandHandler>();
+			builder.Services.AddScoped<GetAllDogadjajiQueryHandler>();
+			builder.Services.AddScoped<FilterByCenaDogadjajQueryHandler>();
+			builder.Services.AddScoped<GetAllDogadjajiQueryHandler>();
+			builder.Services.AddScoped<GetDetailsDogadjajQueryHandler>();
+
 			builder.Services.Configure<HostOptions>(opt =>
 			{
 				opt.StartupTimeout = TimeSpan.FromSeconds(10);

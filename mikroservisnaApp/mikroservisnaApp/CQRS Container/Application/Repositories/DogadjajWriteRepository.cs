@@ -2,6 +2,7 @@
 using Common.EventService;
 using Common.StrucniDogadjajDTO;
 using ContractsCQRS;
+using Microsoft.EntityFrameworkCore;
 using mikroservisnaApp.Data;
 using mikroservisnaApp.MQ_Container;
 using Polly;
@@ -124,9 +125,32 @@ namespace mikroservisnaApp.CQRS_Container.Application.Repositories
 			return dogadjaj.Id;
 		}
 
-		public Task<int> EditStrucniDogadjaj(StrucniDogadjaj.Domain.Write.StrucniDogadjaj dogadjaj)
+		public async Task<int> EditStrucniDogadjaj(StrucniDogadjaj.Domain.Write.StrucniDogadjaj dogadjaj)
 		{
-			throw new NotImplementedException();
+			
+			try
+			{
+				StrucniDogadjaj.Domain.Write.StrucniDogadjaj eventToUpdate = await context.Dogadjaji.Where(d => d.Id == dogadjaj.Id).FirstAsync();
+
+				eventToUpdate.Naziv = dogadjaj.Naziv;
+				eventToUpdate.Agenda = dogadjaj.Agenda;
+				eventToUpdate.Trajanje = dogadjaj.Trajanje;
+				eventToUpdate.LokacijaId = dogadjaj.LokacijaId;
+				eventToUpdate.Cena = dogadjaj.Cena;
+				eventToUpdate.DatumVreme = dogadjaj.DatumVreme;
+				eventToUpdate.OrganizatorId = dogadjaj.OrganizatorId;
+				eventToUpdate.TipId = dogadjaj.TipId;
+
+				context.Update(eventToUpdate);
+				await context.SaveChangesAsync();
+				return 1;
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine("Update Event: Greska! Nije uspelo dodavanje " + ex.Message);
+				return -1;
+			}
+
 		}
 
 		public Task<int> DeleteStrucniDogadjaj(int id)
@@ -153,7 +177,6 @@ namespace mikroservisnaApp.CQRS_Container.Application.Repositories
 
 		string organizatorConsumeQueue = "events.organizer.consumeQueue";
 		string organizatorConsumeKey = "organizer-consume-key";
-
 
 	}
 }
