@@ -24,5 +24,13 @@ namespace EventActivityService.Models.Domain_models
 			return events;
 		}
 
+		public void LoadEvents(List<EventEntity> events)
+		{
+			foreach(var evt in events)
+			{
+				Apply(evt);
+				Version++;
+			}
+		}
 	}
 }

@@ -1,4 +1,4 @@
-using EventActivityService.Models.Domain_models;
+using EventActivityService.Data;
 using EventActivityService.Repositories.SQL_Server;
 
 namespace EventActivityService
@@ -12,9 +12,10 @@ namespace EventActivityService
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddOpenApi();
+			builder.Services.AddSwaggerGen();
 
-            builder.Services.AddSqlServer<EventsDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
-            builder.Services.AddSingleton<EventActivitySQLRepository>();
+			builder.Services.AddSqlServer<EventsDbContext>(builder.Configuration.GetConnectionString("DefaultConnection"));
+            builder.Services.AddScoped<EventActivitySQLRepository>();
 
 
             builder.Services.AddCors(options =>
@@ -36,7 +37,9 @@ namespace EventActivityService
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
-            }
+				app.UseSwagger();
+				app.UseSwaggerUI();
+			}
 
             app.UseAuthorization();
             app.MapControllers();

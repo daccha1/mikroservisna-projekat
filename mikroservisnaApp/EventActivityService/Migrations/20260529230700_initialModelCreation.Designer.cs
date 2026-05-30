@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EventActivityService.Migrations
 {
     [DbContext(typeof(EventsDbContext))]
-    [Migration("20260529210357_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260529230700_initialModelCreation")]
+    partial class initialModelCreation
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -35,6 +35,10 @@ namespace EventActivityService.Migrations
 
                     b.Property<Guid>("EventId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("OccuredAt")
                         .HasColumnType("datetime2");

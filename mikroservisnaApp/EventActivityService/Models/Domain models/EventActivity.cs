@@ -1,4 +1,8 @@
 ﻿using EventActivityService.Models.Events;
+using EventActivityService.Repositories.SQL_Server;
+using System.IdentityModel.Tokens.Jwt;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
 
 namespace EventActivityService.Models.Domain_models
 {
@@ -9,36 +13,139 @@ namespace EventActivityService.Models.Domain_models
 		public decimal Balance { get; set; }
 		public string ContactedCompany { get; set; }
 		public DateTime CheckedInAt { get; set; }
-		public DateTime CheckedOutAt { get; set; }
+		public DateTime? CheckedOutAt { get; set; }
 
 
 		public static EventActivity GuestCheckedIn(Guid guestId)
 		{
-			var activity = new EventActivity();
+			var aggregate = new EventActivity();
 
-			var @evt = new GuestCheckedIn()
+			var evt = new GuestCheckedIn()
 			{
-				GuestId = guestId
+				GuestId = guestId,
+				CheckInTime = DateTime.UtcNow
 			};
 
-			activity.RaiseEvent(@evt);
+			var baseEvt = new EventEntity()
+			{
+				EventType = evt.GetType().Name,
+				Payload = EventEntity.Serialize<GuestCheckedIn>(evt),
+				UserCorrelationId = evt.GuestId
+			};
 
-			return activity;
+			aggregate.RaiseEvent(baseEvt);
+
+			return aggregate;
 		}
 
-		public override void Apply(EventEntity evt)
+		public static async Task<EventActivity> SwitchHall(EventActivity aggregate, int hallNumber)
 		{
-			switch (evt)
+			var evt = new SwitchHallEvent()
 			{
-				case GuestCheckedIn ev:
-					GuestId = ev.GuestId;
+				HallNumber = hallNumber
+			};
+
+			var baseEvt = new EventEntity()
+			{
+				EventType = evt.GetType().Name,
+				Payload = EventEntity.Serialize<SwitchHallEvent>(evt),
+				UserCorrelationId = aggregate.GuestId
+			};
+
+			aggregate.RaiseEvent(baseEvt);
+
+			return aggregate;
+		}
+
+		internal static async Task<EventActivity> AddBalance(EventActivity aggregate, decimal balance)
+		{
+			var evt = new AddBalanceEvent()
+			{
+				Amount = balance
+			};
+
+			var baseEvt = new EventEntity()
+			{
+				EventType = evt.GetType().Name,
+				Payload = EventEntity.Serialize<AddBalanceEvent>(evt),
+				UserCorrelationId = aggregate.GuestId
+			};
+
+			aggregate.RaiseEvent(baseEvt);
+			return aggregate;
+		}
+
+		internal static async Task<EventActivity> CheckOut(EventActivity aggregate, Guid guestId)
+		{
+			var evt = new GuestCheckedOut()
+			{
+				CheckedOutAt = DateTime.UtcNow
+			};
+
+			var baseEvt = new EventEntity()
+			{
+				EventType = evt.GetType().Name,
+				Payload = EventEntity.Serialize<GuestCheckedOut>(evt),
+				UserCorrelationId = aggregate.GuestId
+			};
+
+			aggregate.RaiseEvent(baseEvt);
+
+			return aggregate;
+		}
+
+		internal static async Task<EventActivity> RemoveBalance(EventActivity aggregate, decimal balance)
+		{
+			var evt = new RemoveBalanceEvent()
+			{
+				Amount = balance
+			};
+
+			var baseEvt = new EventEntity()
+			{
+				EventType = evt.GetType().Name,
+				Payload = EventEntity.Serialize<RemoveBalanceEvent>(evt),
+				UserCorrelationId = aggregate.GuestId
+			};
+
+			aggregate.RaiseEvent(baseEvt);
+
+			return aggregate;
+
+		}
+
+		public override void Apply(EventEntity baseEvt)
+		{
+			switch (baseEvt.EventType)
+			{
+				case "GuestCheckedIn":
+					var checkIn = EventEntity.Deserialize<GuestCheckedIn>(baseEvt.Payload);
+					GuestId = checkIn.GuestId;
+					CheckedInAt = checkIn.CheckInTime;
 					CurrentHall = EventHall.CheckIn;
 					Balance = 0m;
 					ContactedCompany = "";
-					CheckedInAt = DateTime.UtcNow;
 					CheckedOutAt = DateTime.MinValue;
+					break;
+				case "SwitchHallEvent":
+					var switchHall = EventEntity.Deserialize<SwitchHallEvent>(baseEvt.Payload);
+					CurrentHall = (EventHall)switchHall.HallNumber;
+					break;
+				case "AddBalanceEvent":
+					var addBalance = EventEntity.Deserialize<AddBalanceEvent>(baseEvt.Payload);
+					Balance += addBalance.Amount;
+					break;
+				case "RemoveBalanceEvent":
+					var removeBalance = EventEntity.Deserialize<RemoveBalanceEvent>(baseEvt.Payload);
+					Balance = Balance + removeBalance.Amount;
+					break;
+				case "GuestCheckedOut":
+					var guestCheckedOut = EventEntity.Deserialize<GuestCheckedOut>(baseEvt.Payload);
+					CheckedOutAt = guestCheckedOut.CheckedOutAt;
 					break;
 			}
 		}
+
+		
 	}
 }

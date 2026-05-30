@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace EventActivityService.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class initialModelCreation : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -19,7 +19,8 @@ namespace EventActivityService.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     EventId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserCorrelationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OccuredAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    OccuredAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EventType = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
