@@ -16,7 +16,7 @@ namespace EventActivityService.Models.Domain_models
 		}
 
 		public abstract void Apply(EventEntity evt);
-
+		public abstract void ApplySnapshot(AggregateSnapshot snapshot);
 		public IReadOnlyList<EventEntity> DequeueUnsavedEvents()
 		{
 			var events = _unsavedEvents.ToList();

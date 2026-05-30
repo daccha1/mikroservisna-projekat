@@ -49,6 +49,7 @@ namespace EventActivityService.Controllers
 		public async Task<IActionResult> AddBalance([FromRoute] Guid guestId, [FromRoute] decimal balance)
 		{
 			var activity = await _repo.AddBalance(guestId, balance);
+			if (activity == null) return Problem();
 			return Ok();
 		}
 
@@ -56,6 +57,7 @@ namespace EventActivityService.Controllers
 		public async Task<IActionResult> RemoveBalance([FromRoute] Guid guestId, [FromRoute] decimal balance)
 		{
 			var activity = await _repo.RemoveBalance(guestId, balance*(-1));
+			if (activity == null) return Problem();
 			return Ok();
 		}
 
@@ -63,6 +65,7 @@ namespace EventActivityService.Controllers
 		public async Task<IActionResult> GetGuestActivity([FromRoute] Guid guestId)
 		{
 			var activity = await _repo.Load<EventActivity>(guestId);
+			if (activity == null) return Problem();
 			return Ok(activity);
 		}
 
@@ -76,6 +79,14 @@ namespace EventActivityService.Controllers
 			}
 			return NotFound();
 		}
+
+		[HttpPost("create-snapshot/{guestId}")]
+		public async Task<IActionResult> CreateSnapshot([FromRoute] Guid guestId)
+		{
+			await _repo.CreateSnapshot(guestId);
+			return Ok("Created snapshot.");
+		}
+
 
 	}
 }

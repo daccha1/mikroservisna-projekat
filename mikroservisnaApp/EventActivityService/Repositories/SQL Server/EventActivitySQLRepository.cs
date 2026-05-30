@@ -18,9 +18,22 @@ namespace EventActivityService.Repositories.SQL_Server
 			var exists = await context.Events.Where(evt => evt.UserCorrelationId == guestId).FirstAsync();
 			if (exists == null) return null;
 
+			var snapshot = await context.ActivitySnapshots.Where(snapshot => snapshot.GuestId == guestId).OrderBy(snapshot=>snapshot.ID).LastOrDefaultAsync();
+			T aggregate = new();
+			int startFromVersion = 0;
+
+			if (snapshot != null)
+			{
+				startFromVersion = snapshot.Version;
+				var eventsAfterVersion = await context.Events.Where(evt => evt.UserCorrelationId == guestId).Skip(startFromVersion).ToListAsync();
+
+				aggregate.ApplySnapshot(snapshot);
+				aggregate.LoadEvents(eventsAfterVersion);
+				return aggregate;
+			}
+
 			var events = await context.Events.Where(evt => evt.UserCorrelationId == guestId).ToListAsync();
 
-			T aggregate = new();
 			aggregate.LoadEvents(events);
 
 			return aggregate;
@@ -102,5 +115,22 @@ namespace EventActivityService.Repositories.SQL_Server
 			return evts;
 		}
 
+		internal async Task CreateSnapshot(Guid guestId)
+		{
+			var aggr = await Load<EventActivity>(guestId);
+			EventActivitySnapshot snapshot = new()
+			{
+				Balance = aggr.Balance,
+				CheckedInAt = aggr.CheckedInAt,
+				CheckedOutAt = aggr.CheckedOutAt,
+				ContactedCompany = aggr.ContactedCompany,
+				CurrentHall = aggr.CurrentHall,
+				GuestId = aggr.GuestId,
+				ID = aggr.ID,
+				Version = aggr.Version
+			};
+			await context.ActivitySnapshots.AddAsync(snapshot);
+			await context.SaveChangesAsync();
+		}
 	}
 }

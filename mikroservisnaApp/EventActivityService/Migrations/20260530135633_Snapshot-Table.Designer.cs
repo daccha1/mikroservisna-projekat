@@ -4,6 +4,7 @@ using EventActivityService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EventActivityService.Migrations
 {
     [DbContext(typeof(EventsDbContext))]
-    partial class EventsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260530135633_Snapshot-Table")]
+    partial class SnapshotTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,7 +25,7 @@ namespace EventActivityService.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("EventActivityService.Models.Domain_models.EventActivitySnapshot", b =>
+            modelBuilder.Entity("EventActivityService.Models.Domain_models.EventActivity", b =>
                 {
                     b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
@@ -54,7 +57,7 @@ namespace EventActivityService.Migrations
 
                     b.HasKey("ID");
 
-                    b.ToTable("ActivitySnapshots");
+                    b.ToTable("Snapshots");
                 });
 
             modelBuilder.Entity("EventActivityService.Models.Events.EventEntity", b =>

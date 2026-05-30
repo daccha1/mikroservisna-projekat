@@ -1,5 +1,6 @@
 ﻿using EventActivityService.Models.Events;
 using EventActivityService.Repositories.SQL_Server;
+using System.Diagnostics.Eventing.Reader;
 using System.IdentityModel.Tokens.Jwt;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -15,7 +16,7 @@ namespace EventActivityService.Models.Domain_models
 		public DateTime CheckedInAt { get; set; }
 		public DateTime? CheckedOutAt { get; set; }
 
-
+	
 		public static EventActivity GuestCheckedIn(Guid guestId)
 		{
 			var aggregate = new EventActivity();
@@ -146,6 +147,18 @@ namespace EventActivityService.Models.Domain_models
 			}
 		}
 
-		
+		public override void ApplySnapshot(AggregateSnapshot snapshot)
+		{
+			if (snapshot is not EventActivitySnapshot eventSnapshot)
+				throw new Exception("Nije odgovarajuci event");
+
+			GuestId = eventSnapshot.GuestId;
+			CurrentHall = eventSnapshot.CurrentHall;
+			Balance = eventSnapshot.Balance;
+			ContactedCompany = eventSnapshot.ContactedCompany;
+			CheckedInAt = eventSnapshot.CheckedInAt;
+			CheckedOutAt = eventSnapshot.CheckedOutAt;
+			Version = eventSnapshot.Version;
+		}
 	}
 }
