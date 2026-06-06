@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PosetilacSagaOrkestrator.Data;
 
@@ -11,9 +12,11 @@ using PosetilacSagaOrkestrator.Data;
 namespace PosetilacSagaOrkestrator.Migrations
 {
     [DbContext(typeof(PosetilacOrkestratorDbContext))]
-    partial class PosetilacOrkestratorDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260606214006_Added-CompensationOutboxTable")]
+    partial class AddedCompensationOutboxTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,9 +41,6 @@ namespace PosetilacSagaOrkestrator.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

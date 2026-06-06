@@ -25,23 +25,29 @@ namespace GiftService.MQ_Container
 
 			_mqClient.HandleReceive += async (_, ea) =>
 			{
-				// servis koji komunicira sa repo i hendluje dogadjaje
-
 				using (var scope = scopeFactory.CreateScope()) 
 				{
 					var _giftService = scope.ServiceProvider.GetService<IGiftEventsService>();
 
 					var jsonString = Encoding.UTF8.GetString(ea.Body.Span);
-					PosetilacCreated posetilac = JsonSerializer.Deserialize<PosetilacCreated>(jsonString);
+					PosetilacCreated? posetilac = JsonSerializer.Deserialize<PosetilacCreated>(jsonString);
 
 					Console.WriteLine("Gift service je pokrenut i obradice poruku.");
 					await _giftService.HandleGiftCreation(posetilac);
 					Console.WriteLine("Gift service je obradio poruku. Gift je dodat u bazu.");
-
 				}
+			};
 
+			_mqClient.HandleCompensation += async (_, ea) =>
+			{
+				using (var scope = scopeFactory.CreateScope())
+				{
+					var _giftService = scope.ServiceProvider.GetService<IGiftEventsService>();
+					GiftCompensation? comp = JsonSerializer.Deserialize<GiftCompensation>(Encoding.UTF8.GetString(ea.Body.Span));
 
-
+					Console.WriteLine($"Izvrsavanje kompenzacije - brisanje gift-a: {comp.CorrelationId}");
+					await _giftService.ExecuteCompensation(comp.CorrelationId);				}
+					Console.WriteLine("Gift izbrisan");
 			};
 			await Task.Delay(Timeout.Infinite, stoppingToken);
 		}

@@ -16,6 +16,19 @@ namespace GiftService.Repositories.SQL_Server
 			_context = context;
 		}
 
+		public async Task<int> RemoveGift(Guid id)
+		{
+			var gift = await _context.Gifts.Where(g => g.CorrelationId == id).FirstOrDefaultAsync();
+
+			if(gift == null)
+			{
+				return 0;
+			}
+
+			_context.Gifts.Remove(gift);
+			await _context.SaveChangesAsync();
+			return 1;
+		}
 
 		public async Task<Gift> CreateGift(Gift g)
 		{

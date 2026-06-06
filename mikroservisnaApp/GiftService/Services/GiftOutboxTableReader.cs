@@ -40,6 +40,11 @@ namespace GiftService.Services
 						CorrelationId = outboxResult.CorrelationId,
 					};
 
+					if(outboxResult.SuccessfulCreation == false)
+					{
+						giftMsg.GiftStatus = GiftStatus.Failed;
+					}
+
 					// ovo sad treba da se publishuje na orkestrator
 					var mqClient = scope.ServiceProvider.GetService<IMQClient>();
 

@@ -107,6 +107,18 @@ namespace PosetilacSagaOrkestrator.Services.MQ_Container
 					routingKey: posetilacServiceConsumeRouting
 				);
 
+			// queue: gift queue za kompenzacije
+			await _channel.QueueDeclareAsync(
+					queue: giftCompensationQueue,
+					durable: false,
+					exclusive: false,
+					autoDelete: false
+				);
+			await _channel.QueueBindAsync(
+					queue: giftCompensationQueue,
+					exchange: exchangeName,
+					routingKey: giftCompensationRouting
+				);
 		}
 
 		public async Task Publish(string routingKeyString, string payload)
@@ -169,6 +181,11 @@ namespace PosetilacSagaOrkestrator.Services.MQ_Container
 
 		public string posetilacServiceConsumeQueue = "events.posetilac.transaction-consume-queue";
 		public string posetilacServiceConsumeRouting = "transaction-final-feedback";
+
+		public string giftCompensationQueue = "events.compensation.gift"; // gift compensation queue
+		public string giftCompensationRouting = "gift-compensation";
+
+		
 
 	}
 }

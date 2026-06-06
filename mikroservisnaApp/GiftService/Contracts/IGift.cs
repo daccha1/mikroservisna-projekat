@@ -9,5 +9,6 @@ namespace GiftService.Contracts
 		public List<GiftResponseDTO> GetGifts();
 		public GiftResponseDTO GetGiftById(int id);
 		Task CreateGiftOutboxMessage(GiftCreatedOutboxMessage outboxMsg);
+		Task<int> RemoveGift(Guid id);
 	}
 }

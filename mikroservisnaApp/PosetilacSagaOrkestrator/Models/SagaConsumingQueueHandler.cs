@@ -1,8 +1,10 @@
 ﻿using Common.Saga_Contracts;
 using PosetilacSagaOrkestrator.Data;
+using PosetilacSagaOrkestrator.Services.MQ_Container;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
 
 
 
@@ -93,6 +95,17 @@ namespace PosetilacSagaOrkestrator.Models
 					MessageStatus = TransactionMessageStatus.ForProcessing,
 					FailedService = FailedService.Notification
 				};
+
+				
+				// add u tabelu -> Dispatcher procita i salje na queue
+				CompensationOutboxMessage comp = new()
+				{
+					Status = Common.Status.NotProcessed,
+					CorrelationId = e.CorrelationId,
+					CreatedAt = DateTime.UtcNow,
+					CompensationService = Service.Gift
+				};
+				await dbSaga.CompensationOutboxMessages.AddAsync(comp);
 
 				await dbSaga.TransactionConfirmationOutboxMessages.AddAsync(transactionMsg);
 				dbSaga.PosetilacSagaStates.Update(saga);

@@ -16,7 +16,7 @@ namespace PosetilacSagaOrkestrator.Data
 		public DbSet<GiftOutboxMessage> GiftsOutboxMessages { get; set; }
 		public DbSet<NotificationOutboxMessage> NotificationsOutboxMessages { get; set; }
 		public DbSet<TransactionConfirmationOutboxMessage> TransactionConfirmationOutboxMessages { get; set; }
-
+		public DbSet<CompensationOutboxMessage> CompensationOutboxMessages { get; set; }
 
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{

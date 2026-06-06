@@ -13,13 +13,8 @@ namespace PosetilacSagaOrkestrator
 			_ = Task.Run(() => MessageDispatcher.DispatchGiftPosetilacOutboxMessage());
 			_ = Task.Run(() => MessageDispatcher.DispatchNotificationOutboxMessage());
 			_ = Task.Run(() => MessageDispatcher.DispatchTransactionOutboxMessage());
-			
-			// uhvati poruku da je kreiran posetilac
-			// kreiramo inicijalni state, outbox state, i bg workera
-			// publishujemo na GiftService, generise se gift vraca na queue
-			// uhvatimo ponovo poruku, izmenimo state preko CorrelationId-a
-			// tada publishujemo poruku na EmailService
-			// u emailService u mejlu dovucemo taj pdf, i saljemo i njega
+			_ = Task.Run(() => MessageDispatcher.DispatchGiftPosetilacCompensation());
+
 			Console.WriteLine("Pokrenuta SAGA konzola.");
 			using var mqClient = new MQClient();
 			
@@ -27,13 +22,6 @@ namespace PosetilacSagaOrkestrator
 			
 			await mqClient.Subscribe<PosetilacCreated>("events.orch.pos-creation", async (e) => {
 				Console.WriteLine(" -- kreiran je novi posetilac -- ");
-
-				// saga: da li postoji vec
-
-				// ako ne:
-				//		kreiraj state
-				//		pusti outbox da ide to dalje
-				//		sacuvaj promene
 
 				var dbSaga = new PosetilacOrkestratorDbContext();
 
@@ -61,12 +49,11 @@ namespace PosetilacSagaOrkestrator
 
 				await dbSaga.PosetilacSagaStates.AddAsync(sagaState);
 				await dbSaga.GiftsOutboxMessages.AddAsync(outboxMsg);
-
 				await dbSaga.SaveChangesAsync();
-
 			});
 
 			await mqClient.Subscribe<NotifyOrchestratorEvent>("events.orch.consume-queue", async (e) => {
+				
 				Console.WriteLine(" << STIGAO ODGOVOR NA CONSUME QUEUE >> ");
 
 				switch (e.EventType)

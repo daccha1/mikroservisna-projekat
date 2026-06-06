@@ -12,5 +12,6 @@
 		public Guid CorrelationId { get; set; }
 		public DateTime CreatedAt { get; set; }
 		public GiftOutboxStatus Status { get; set; } = GiftOutboxStatus.ForProcessing;
+		public bool SuccessfulCreation { get; set; }
 	}
 }

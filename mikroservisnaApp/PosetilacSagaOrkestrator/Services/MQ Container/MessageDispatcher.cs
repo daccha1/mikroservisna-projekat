@@ -135,5 +135,37 @@ namespace PosetilacSagaOrkestrator.Services.MQ_Container
 				await Task.Delay(3000);
 			}
 		}
+	
+		// kompenzacije
+
+		public static async void DispatchGiftPosetilacCompensation() // DISPATCHER ZA KOMPENZACIJU GIFT-A
+		{
+			while (true)
+			{
+				var dbSaga = new PosetilacOrkestratorDbContext();
+
+				var message = await dbSaga.CompensationOutboxMessages.Where(msg => msg.Status == Common.Status.NotProcessed).FirstOrDefaultAsync();
+
+				if(message == null)
+				{
+					await Task.Delay(5000);
+					continue;
+				}
+
+				GiftCompensation comp = new()
+				{
+					CorrelationId = message.CorrelationId
+				};
+
+				MQClient client = new();
+				await client.Publish("gift-compensation", JsonSerializer.Serialize<GiftCompensation>(comp));
+
+				message.Status = Common.Status.Processed;
+				dbSaga.Update(message);
+				await dbSaga.SaveChangesAsync();
+				await Task.Delay(3000);
+			}
+		}
+	
 	}
 }

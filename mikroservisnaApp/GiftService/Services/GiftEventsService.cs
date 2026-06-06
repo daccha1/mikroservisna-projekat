@@ -6,6 +6,7 @@ namespace GiftService.Services
 {
 	public interface IGiftEventsService
 	{
+		Task ExecuteCompensation(Guid correlationId);
 		public Task HandleGiftCreation(PosetilacCreated posetilac);
 	}
 
@@ -15,6 +16,12 @@ namespace GiftService.Services
 		public GiftEventsService(IGift repo)
 		{
 			_repository = repo;
+		}
+
+		public Task ExecuteCompensation(Guid correlationId)
+		{
+			var result = _repository.RemoveGift(correlationId);
+			return result;
 		}
 
 		public async Task HandleGiftCreation(PosetilacCreated posetilac)
@@ -42,7 +49,7 @@ namespace GiftService.Services
 					prirucnikTip = GiftType.CyberSecurityPDF;
 					break;
 				default:
-					prirucnikTip = GiftType.WebDevelopmentPDF;
+					prirucnikTip = GiftType.None;
 					break;
 			}
 
@@ -56,11 +63,21 @@ namespace GiftService.Services
 				Vaucer = posetilac.CorrelationId
 			};
 
+			
 			GiftCreatedOutboxMessage outboxMsg = new()
 			{
 				CorrelationId = posetilac.CorrelationId,
-				CreatedAt = DateTime.UtcNow
+				CreatedAt = DateTime.UtcNow,
 			};
+
+			if (prirucnikTip == GiftType.None)
+			{
+				outboxMsg.SuccessfulCreation = false;
+			}
+			else
+			{
+				outboxMsg.SuccessfulCreation = true;
+			}
 
 			await _repository.CreateGift(g);
 			await _repository.CreateGiftOutboxMessage(outboxMsg);

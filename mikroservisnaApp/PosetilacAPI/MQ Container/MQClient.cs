@@ -1,4 +1,5 @@
 ﻿	using Common.Saga_Contracts;
+using Microsoft.EntityFrameworkCore;
 using PosetilacAPI.Data;
 using PosetilacAPI.Models;
 using RabbitMQ.Client;
@@ -121,14 +122,23 @@ using System.Text;
 					var jsonString = Encoding.UTF8.GetString(ea.Body.Span);
 					TransactionFinalState? tfs = JsonSerializer.Deserialize<TransactionFinalState>(jsonString);
 
-					SagaResultOutboxMessage msg = new()
-					{
-						CorrelationId = tfs.CorrelationId,
-						FinalState = (tfs.TranscationStatus == FinalTransactionState.Successful ? State.Success : State.Fail),
-						OutboxState = OutboxState.ForProcessing
-					};
+					//SagaResultOutboxMessage msg = new()
+					//{
+					//	CorrelationId = tfs.CorrelationId,
+					//	FinalState = (tfs.TranscationStatus == FinalTransactionState.Successful ? State.Success : State.Fail),
+					//	OutboxState = OutboxState.ForProcessing
+					//};
 
-					await db.SagaResultOutbox.AddAsync(msg);
+					//await db.SagaResultOutbox.AddAsync(msg); *** Sto mi je ovo trebalo?
+
+					if(tfs.TranscationStatus == FinalTransactionState.Failed)
+					{
+						var deletionPosetilac = await db.Posetioci.Where(p => p.CorrelationId == tfs.CorrelationId).FirstOrDefaultAsync();
+
+						db.Posetioci.Remove(deletionPosetilac);
+					}
+
+
 					await db.SaveChangesAsync();
 
 					await channel.BasicAckAsync(

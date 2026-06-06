@@ -1,6 +1,7 @@
 ﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
+using System.Threading.Channels;
 
 namespace GiftService.MQ_Container
 {
@@ -8,8 +9,8 @@ namespace GiftService.MQ_Container
 	{
 		public Task EnsureStarted();
 		public Task SendMessage(string payload);
-
 		event AsyncEventHandler<BasicDeliverEventArgs> HandleReceive;
+		event AsyncEventHandler<BasicDeliverEventArgs> HandleCompensation;
 	}
 
 	public class MQClient : IMQClient
@@ -18,11 +19,15 @@ namespace GiftService.MQ_Container
 		public IConnection connection;
 		public IChannel channel;
 		public event AsyncEventHandler<BasicDeliverEventArgs> HandleReceive;
+		public event AsyncEventHandler<BasicDeliverEventArgs> HandleCompensation;
 
 		public string exchangeName = "saga-exchange";
 
 		public string pubGiftPosetilac = "events.posetilac.create-gift";
 		public string pubGiftPosetilacRouting = "create-gift";
+
+		public string giftCompensationQueue = "events.compensation.gift";
+		public string giftCompensationRouting = "gift-compensation";
 
 		// QUEUE NA KOJI CE ORKESTRATOR OSLUSKIVATI
 		public string orchConsumeQueue = "events.orch.consume-queue";
@@ -93,8 +98,18 @@ namespace GiftService.MQ_Container
 					exchange: exchangeName,
 					routingKey: orchConsumeRouting
 				);
-
-
+			// queue: gift kompenzacije
+			await channel.QueueDeclareAsync(
+					queue: giftCompensationQueue,
+					durable: false,
+					exclusive: false,
+					autoDelete: false
+				);
+			await channel.QueueBindAsync(
+					queue: giftCompensationQueue,
+					exchange: exchangeName,
+					routingKey: giftCompensationRouting
+				);
 
 			// consumer-a koji osluskuje queue
 			AsyncEventingBasicConsumer consumer = new AsyncEventingBasicConsumer(channel);
@@ -112,8 +127,24 @@ namespace GiftService.MQ_Container
 					queue: pubGiftPosetilac,
 					autoAck: false,
 					consumer: consumer
-				);  
+				);
 
+			AsyncEventingBasicConsumer compensationConsumer = new AsyncEventingBasicConsumer(channel);
+
+			compensationConsumer.ReceivedAsync += async (_, ea) =>
+			{
+				await HandleCompensation.Invoke(this, ea);
+				await channel.BasicAckAsync(
+						ea.DeliveryTag,
+						multiple: false
+					);
+			};
+
+			await channel.BasicConsumeAsync(
+					queue: giftCompensationQueue,
+					autoAck: false,
+					consumer: compensationConsumer
+				);
 
 		}
 
