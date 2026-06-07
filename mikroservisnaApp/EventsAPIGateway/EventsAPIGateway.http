@@ -2,5 +2,3 @@
 
 GET {{EventsAPIGateway_HostAddress}}/weatherforecast/
 Accept: application/json
-
-###

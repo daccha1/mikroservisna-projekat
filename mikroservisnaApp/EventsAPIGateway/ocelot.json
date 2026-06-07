@@ -134,14 +134,19 @@
         }
       ]
     }
-
-
-
-
-
   ], 
   "Aggregates": [],
   "GlobalConfiguration": {
-    "BaseUrl": "https://localhost:7089"
+    "BaseUrl": "https://localhost:7089",
+    "RateLimitOptions": { //6. rate limiting
+      "RouteKeys": [],
+      "ClientIdHeader": "Cookie", // header po kom identifikuje klijente
+      "Limit": 10,
+      "Period": "30s", // ms, s, m, h, d
+      "Wait": "1m", // ms, s, m, h, d
+      "StatusCode": 429, // Too Many Requests
+      "QuotaMessage": "API calls quota exceeded! Maximum admitted {0} per {1}.",
+      "KeyPrefix": "ocelot-rate-limiting"
+    }
   }
 }
