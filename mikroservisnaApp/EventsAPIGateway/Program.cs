@@ -1,6 +1,8 @@
 
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
+using Ocelot.Cache.CacheManager;
+using MMLib.SwaggerForOcelot.DependencyInjection;
 
 namespace EventsAPIGateway
 {
@@ -14,14 +16,16 @@ namespace EventsAPIGateway
 						.SetBasePath(builder.Environment.ContentRootPath)
 						.AddOcelot(); 
 			
-			builder.Services.AddOcelot(builder.Configuration);
+			builder.Services.AddOcelot(builder.Configuration).AddCacheManager(x => x.WithDictionaryHandle());
 
 			builder.Services.AddControllers();
 			builder.Services.AddOpenApi();
 
-			// Swagger
+			builder.Services.AddSwaggerForOcelot(builder.Configuration); // swagger for ocelot
+
+
 			builder.Services.AddEndpointsApiExplorer();
-			builder.Services.AddSwaggerGen();
+			//builder.Services.AddSwaggerGen();
 
 			var app = builder.Build();
 
@@ -34,10 +38,13 @@ namespace EventsAPIGateway
 
 			app.UseAuthorization();
 
-
 			app.MapControllers();
-			app.UseSwagger();
-			app.UseSwaggerUI();
+
+			app.UseSwaggerForOcelotUI(opt =>
+			{
+				opt.PathToSwaggerGenerator = "/swagger/docs";
+			});
+
 			await app.UseOcelot();
 			app.Run();
 		}

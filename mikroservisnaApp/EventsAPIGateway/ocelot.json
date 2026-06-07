@@ -13,7 +13,8 @@
           "Host": "localhost",
           "Port": 7042
         }
-      ]
+      ],
+      "SwaggerKey": "events"
     },
     // Events: Get by id
     {
@@ -26,7 +27,8 @@
           "Host": "localhost",
           "Port": 7042
         }
-      ]
+      ],
+      "SwaggerKey": "events"
     },
     // Events: Get by price filter
     {
@@ -39,7 +41,8 @@
           "Host": "localhost",
           "Port": 7042
         }
-      ]
+      ],
+      "SwaggerKey": "events"
     },
     // Events: Add new event
     {
@@ -52,7 +55,8 @@
           "Host": "localhost",
           "Port": 7042
         }
-      ]
+      ],
+      "SwaggerKey": "events"
     },
     // Events: Update an event
     {
@@ -65,7 +69,8 @@
           "Host": "localhost",
           "Port": 7042
         }
-      ]
+      ],
+      "SwaggerKey": "events"
     },
     // Events: Delete an event
     {
@@ -78,7 +83,8 @@
           "Host": "localhost",
           "Port": 7042
         }
-      ]
+      ],
+      "SwaggerKey": "events"
     },
 
     // --- POSETILAC ---
@@ -93,7 +99,8 @@
           "Host": "localhost",
           "Port": 7035
         }
-      ]
+      ],
+      "SwaggerKey": "visitors"
     },
     // Posetioci: Get by id
     {
@@ -106,7 +113,8 @@
           "Host": "localhost",
           "Port": 7035
         }
-      ]
+      ],
+      "SwaggerKey": "visitors"
     },
     // Posetioci: add new
     {
@@ -119,7 +127,8 @@
           "Host": "localhost",
           "Port": 7035
         }
-      ]
+      ],
+      "SwaggerKey": "visitors"
     },
     // Posetioci: Update posetilac
     {
@@ -132,21 +141,48 @@
           "Host": "localhost",
           "Port": 7035
         }
-      ]
+      ],
+      "SwaggerKey": "visitors"
     }
-  ], 
+  ],
   "Aggregates": [],
   "GlobalConfiguration": {
     "BaseUrl": "https://localhost:7089",
-    "RateLimitOptions": { //6. rate limiting
-      "RouteKeys": [],
-      "ClientIdHeader": "Cookie", // header po kom identifikuje klijente
+    "RateLimitOptions": {
+      "EnableRateLimiting": true,
+      "DisableRateLimitHeaders": false,
+      "HttpStatusCode": 429,
+      "QuotaExceededMessage": "Prevazidjen limit!",
+      "ClientIdHeader": "ClientId",
       "Limit": 10,
-      "Period": "30s", // ms, s, m, h, d
-      "Wait": "1m", // ms, s, m, h, d
-      "StatusCode": 429, // Too Many Requests
-      "QuotaMessage": "API calls quota exceeded! Maximum admitted {0} per {1}.",
-      "KeyPrefix": "ocelot-rate-limiting"
+      "Period": "30s",
+      "Wait": "5s"
     }
-  }
+  },
+
+  // ne radi lepo
+  "SwaggerEndPoints": [
+    {
+      "Key": "events",
+      "Config": [
+        {
+          "Name": "EventsAPI",
+          "Version": "v1",
+          "Url": "https://localhost:7042/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "visitors",
+      "Config": [
+        {
+          "Name": "VisitorsAPI",
+          "Version": "v1",
+          "Url": "https://localhost:7035/swagger/v1/swagger.json"
+        }
+      ]
+    }
+
+  ],
+
 }
