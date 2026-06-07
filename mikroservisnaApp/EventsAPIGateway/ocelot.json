@@ -1,6 +1,27 @@
 {
 
   "Routes": [
+    {
+      "UpstreamHttpMethod": [ "Get" ],
+      "UpstreamPathTemplate": "/random/{everything}",
+      "DownstreamPathTemplate": "/{everything}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "api.openf1.org",
+          "Port": 443
+        },
+        {
+          "Host": "wizard-world-api.herokuapp.com",
+          "Port": 443
+        }
+      ],
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      }
+    },
+
+
     // --- EVENTS ---
     // Events: Get all
     {
@@ -14,7 +35,8 @@
           "Port": 7042
         }
       ],
-      "SwaggerKey": "events"
+      "SwaggerKey": "events",
+      "Key": "Events"
     },
     // Events: Get by id
     {
@@ -100,10 +122,8 @@
           "Port": 7035
         }
       ],
-      "CacheOptions": {
-         "TtlSeconds": 15
-      },
-      "SwaggerKey": "visitors"
+      "SwaggerKey": "visitors",
+      "Key": "Visitors"
     },
     // Posetioci: Get by id
     {
@@ -148,7 +168,13 @@
       "SwaggerKey": "visitors"
     }
   ],
-  "Aggregates": [],
+  "Aggregates": [
+    {
+      "UpstreamHttpMethod": [ "Get" ],
+      "UpstreamPathTemplate": "/events-visitors",
+      "RouteKeys": [ "Events", "Visitors" ]
+    },
+  ],
   "GlobalConfiguration": {
     "BaseUrl": "https://localhost:7089",
     "RateLimitOptions": {
@@ -160,6 +186,9 @@
       "Limit": 10,
       "Period": "30s",
       "Wait": "5s"
+    },
+    "CacheOptions": {
+      "TtlSeconds": 1
     }
   },
 
