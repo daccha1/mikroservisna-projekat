@@ -80,7 +80,7 @@ namespace mikroservisnaApp.Controllers
 			return NoContent();
 		}
 
-		[HttpGet("/price-filter")]
+		[HttpGet("price-filter")]
 		public async Task<IActionResult> GetByCenaFilter([FromQuery] FilterByCenaDogadjajQuery query)
 		{
 			var result = await _cenaHandler.Handle(query);

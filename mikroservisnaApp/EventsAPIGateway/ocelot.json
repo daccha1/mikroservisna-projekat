@@ -1,0 +1,147 @@
+{
+
+  "Routes": [
+    // --- EVENTS ---
+    // Events: Get all
+    {
+      "UpstreamHttpMethod": [ "Get" ],
+      "UpstreamPathTemplate": "/events",
+      "DownstreamPathTemplate": "/events",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7042
+        }
+      ]
+    },
+    // Events: Get by id
+    {
+      "UpstreamHttpMethod": [ "Get" ],
+      "UpstreamPathTemplate": "/events/{id}",
+      "DownstreamPathTemplate": "/events/{id}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7042
+        }
+      ]
+    },
+    // Events: Get by price filter
+    {
+      "UpstreamHttpMethod": [ "Get" ],
+      "UpstreamPathTemplate": "/events/filter/{price}",
+      "DownstreamPathTemplate": "/events/price-filter?Cena={price}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7042
+        }
+      ]
+    },
+    // Events: Add new event
+    {
+      "UpstreamHttpMethod": [ "Post" ],
+      "UpstreamPathTemplate": "/events/add-new",
+      "DownstreamPathTemplate": "/events/add",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7042
+        }
+      ]
+    },
+    // Events: Update an event
+    {
+      "UpstreamHttpMethod": [ "Put" ],
+      "UpstreamPathTemplate": "/events/update/{eventId}",
+      "DownstreamPathTemplate": "/events/update/{eventId}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7042
+        }
+      ]
+    },
+    // Events: Delete an event
+    {
+      "UpstreamHttpMethod": [ "Delete" ],
+      "UpstreamPathTemplate": "/events/delete/{eventId}",
+      "DownstreamPathTemplate": "/events/delete/{eventId}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7042
+        }
+      ]
+    },
+
+    // --- POSETILAC ---
+    // Posetioci: Get all
+    {
+      "UpstreamHttpMethod": [ "Get" ],
+      "UpstreamPathTemplate": "/visitors",
+      "DownstreamPathTemplate": "/posetioci",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7035
+        }
+      ]
+    },
+    // Posetioci: Get by id
+    {
+      "UpstreamHttpMethod": [ "Get" ],
+      "UpstreamPathTemplate": "/visitors/{visitorId}",
+      "DownstreamPathTemplate": "/posetioci/{visitorId}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7035
+        }
+      ]
+    },
+    // Posetioci: add new
+    {
+      "UpstreamHttpMethod": [ "Post" ],
+      "UpstreamPathTemplate": "/visitors/add-new",
+      "DownstreamPathTemplate": "/posetioci/add",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7035
+        }
+      ]
+    },
+    // Posetioci: Update posetilac
+    {
+      "UpstreamHttpMethod": [ "Put" ],
+      "UpstreamPathTemplate": "/visitors/update/{visitorId}",
+      "DownstreamPathTemplate": "/posetioci/update/{visitorId}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7035
+        }
+      ]
+    }
+
+
+
+
+
+  ], 
+  "Aggregates": [],
+  "GlobalConfiguration": {
+    "BaseUrl": "https://localhost:7089"
+  }
+}
