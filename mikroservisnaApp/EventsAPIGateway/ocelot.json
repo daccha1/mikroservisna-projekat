@@ -100,6 +100,9 @@
           "Port": 7035
         }
       ],
+      "CacheOptions": {
+         "TtlSeconds": 15
+      },
       "SwaggerKey": "visitors"
     },
     // Posetioci: Get by id
