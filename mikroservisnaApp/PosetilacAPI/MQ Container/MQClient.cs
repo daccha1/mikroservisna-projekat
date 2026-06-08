@@ -8,6 +8,7 @@ using RabbitMQ.Client.Events;
 using System.Text;
 	using System.Text.Json;
 	using System.Text.Json.Serialization;
+using System.Threading.Channels;
 
 
 	namespace PosetilacAPI.MQ_Container
@@ -40,7 +41,14 @@ using System.Text;
 			public string certificationRequestQueue = "events.posetilac.certification-requested";
 			public string certificationRequestRouting = "certification-requested";
 
-			private IServiceScopeFactory _scopeFactory;
+			public string certificationCompletedQueue = "events.email.certification-completed";
+			public string certificationCompletedRouting = "certification-completed";
+
+			public string certificationFinalFailQueue = "events.certification.certification-final-fail";
+			public string certificationFinalFailRouting = "final-fail-certification";
+
+		private IServiceScopeFactory _scopeFactory;
+
 			public MQClient(IServiceScopeFactory scopeFactory)
 			{
 				_scopeFactory = scopeFactory;
@@ -134,11 +142,34 @@ using System.Text;
 					exclusive: false,
 					autoDelete: false
 				);
-
 				await channel.QueueBindAsync(
 					queue: certificationRequestQueue,
 					exchange: choreographyExchange,
 					routingKey: certificationRequestRouting
+				);
+
+				await channel.QueueDeclareAsync(
+					queue: certificationCompletedQueue,
+					durable: false,
+					exclusive: false,
+					autoDelete: false
+				);
+				await channel.QueueBindAsync(
+					queue: certificationCompletedQueue,
+					exchange: choreographyExchange,
+					routingKey: certificationCompletedRouting
+				);
+
+				await channel.QueueDeclareAsync(
+					queue: certificationFinalFailQueue,
+					durable: false,
+					exclusive: false,
+					autoDelete: false
+				);
+				await channel.QueueBindAsync(
+					queue: certificationFinalFailQueue,
+					exchange: choreographyExchange,
+					routingKey: certificationFinalFailRouting
 				);
 
 			var consumer = new AsyncEventingBasicConsumer(channel);
@@ -176,13 +207,87 @@ using System.Text;
 						);
 				};
 
-			await channel.BasicConsumeAsync(
+				await channel.BasicConsumeAsync(
 					queue: posetilacServiceConsumeQueue,
 					autoAck: false,
 					consumer
 				);
-				
-			}
+
+
+			// consumer koji osluskuje queue za sertifikaciju
+			var certificationConsumer = new AsyncEventingBasicConsumer(channel);
+
+			certificationConsumer.ReceivedAsync += async (_, ea) =>
+			{
+				using var scope = _scopeFactory.CreateScope();
+				var db = scope.ServiceProvider.GetService<PosetilacDbContext>();
+
+				var jsonString = Encoding.UTF8.GetString(ea.Body.Span);
+				CertificationCompleted? msg = JsonSerializer.Deserialize<CertificationCompleted>(jsonString);
+
+				var visitor = await db.Posetioci.Where(visitor => visitor.CorrelationId == msg.CorrelationId).FirstOrDefaultAsync();
+
+				if(msg.State == CertificationState.Sucessful)
+				{
+					visitor.Certificate = Certification.Certified;
+				}
+				else
+				{
+					visitor.Certificate = Certification.Cancelled;
+				}
+
+				db.Posetioci.Update(visitor);
+				await db.SaveChangesAsync();
+				await channel.BasicAckAsync(
+						deliveryTag: ea.DeliveryTag,
+						multiple: false
+					);
+			};
+
+			await channel.BasicConsumeAsync(
+				queue: certificationCompletedQueue,
+				autoAck: false,
+				certificationConsumer
+			);
+
+
+
+			var failConsumer = new AsyncEventingBasicConsumer(channel);
+
+			failConsumer.ReceivedAsync += async (_, ea) =>
+			{
+				using var scope = _scopeFactory.CreateScope();
+				var db = scope.ServiceProvider.GetService<PosetilacDbContext>();
+
+				var jsonString = Encoding.UTF8.GetString(ea.Body.Span);
+				CertificationFailed? msg = JsonSerializer.Deserialize<CertificationFailed>(jsonString);
+
+				var visitor = await db.Posetioci.Where(visitor => visitor.CorrelationId == msg.CorrelationId).FirstOrDefaultAsync();
+
+				if (msg.FailType == FailType.EmailFail)
+				{
+					visitor.Certificate = Certification.Cancelled;
+				}
+				else
+				{
+					visitor.Certificate = Certification.Cancelled;
+				}
+
+				db.Posetioci.Update(visitor);
+				await db.SaveChangesAsync();
+				await channel.BasicAckAsync(
+						deliveryTag: ea.DeliveryTag,
+						multiple: false
+					);
+			};
+
+			await channel.BasicConsumeAsync(
+				queue: certificationFinalFailQueue,
+				autoAck: false,
+				failConsumer
+			);
+
+		}
 
 			public async Task SendMessage(CertificationRequested evt)
 			{

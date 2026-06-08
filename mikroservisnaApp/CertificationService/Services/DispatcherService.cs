@@ -23,7 +23,11 @@ namespace CertificationService.Services
 
 				var message = await db.CertificationsOutboxTable.Where(msg => msg.Status == Common.Status.NotProcessed).FirstOrDefaultAsync();
 
-				if (message == null) await Task.Delay(2000);
+				if (message == null)
+				{
+					await Task.Delay(2000);
+					continue;
+				}
 
 				CertificationCreated createdMsg = new()
 				{

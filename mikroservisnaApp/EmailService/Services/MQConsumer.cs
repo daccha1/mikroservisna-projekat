@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading.Channels;
 using Common;
 using Common.Saga_Contracts;
+using Common.Saga_Contracts.Choreography;
 using Common.StrucniDogadjajDTO;
 using EmailService.Data;
 using EmailService.Models;
@@ -44,6 +45,12 @@ namespace EmailService.Services
 
 		public string certificationCreatedQueue = "events.certifications.certification-created";
 		public string certificationCreatedRouting = "certification-created";
+
+		public string certificationCompletedQueue = "events.email.certification-completed";
+		public string certificationCompletedRouting = "certification-completed";
+
+		public string certificationEmailFailQueue = "events.email.certification-email-fail";
+		public string certificationEmailFailRouting = "certification-email-fail";
 
 		private IServiceScopeFactory _scopeFactory;
 		
@@ -158,6 +165,18 @@ namespace EmailService.Services
 							routingKey: certificationCreatedRouting
 						);
 
+					await channel.QueueDeclareAsync(
+							queue: certificationCompletedQueue,
+							durable: false,
+							exclusive: false,
+							autoDelete: false
+						);
+					await channel.QueueBindAsync(
+							queue: certificationCompletedQueue,
+							exchange: choreographyExchange,
+							routingKey: certificationCompletedRouting
+						);
+
 
 					// CONSUMER KOJI OSLUSKUJE KREIRANJE NOVOG EVENTA (event <=> strucni dogadjaj)
 					var consumerEventCreated = new AsyncEventingBasicConsumer(channel);
@@ -179,6 +198,8 @@ namespace EmailService.Services
 						catch (Exception) {}
 					};
 					await channel.BasicConsumeAsync(emailServiceQueue, autoAck: false, consumerPosetilacNotification);
+
+
 
 					var consumerCertificationCreated = new AsyncEventingBasicConsumer(channel);
 					consumerCertificationCreated.ReceivedAsync += async (_, ea) =>
@@ -209,6 +230,53 @@ namespace EmailService.Services
 		private async Task HandleCreatedCertification(BasicDeliverEventArgs ea, CancellationToken stoppingToken)
 		{
 			var body = Encoding.UTF8.GetString(ea.Body.Span);
+			var certification = JsonSerializer.Deserialize<CertificationCreated>(body);
+
+			if (certification == null)
+			{
+				await channel.BasicAckAsync(ea.DeliveryTag, false);
+				return;
+			}
+
+			CertificationCompleted completionMsg = new()
+			{
+				CorrelationId = certification.CorrelationId,
+				CreatedAt = DateTime.UtcNow,
+				State = CertificationState.Sucessful
+			};
+
+			try
+			{
+				await EmailSenderClient.Instance.SendMessage(certification);
+
+				var jsonString = JsonSerializer.Serialize<CertificationCompleted>(completionMsg);
+				var completionBody = Encoding.UTF8.GetBytes(jsonString);
+
+				await channel.BasicPublishAsync(
+							exchange: choreographyExchange,
+							routingKey: "certification-completed",
+							body: completionBody
+						);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(" >>>>>  GRESKA  <<<<<< " + ex.Message);
+				
+				completionMsg.State = CertificationState.Cancelled;
+				var jsonString = JsonSerializer.Serialize<CertificationCompleted>(completionMsg);
+				var completionBody = Encoding.UTF8.GetBytes(jsonString);
+
+				await channel.BasicPublishAsync(
+							exchange: choreographyExchange,
+							routingKey: "certification-email-fail",
+							body: completionBody
+						);
+			}
+			finally
+			{
+				await channel.BasicAckAsync(ea.DeliveryTag, false);
+			}
+
 		}
 
 		private async Task HandlePosetilacNotification(BasicDeliverEventArgs ea, CancellationToken stoppingToken)

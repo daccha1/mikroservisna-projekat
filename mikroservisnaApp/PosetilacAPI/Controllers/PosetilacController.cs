@@ -50,7 +50,7 @@ namespace PosetilacAPI.Controllers
         }
 
         [HttpPost("certify/{id}")]
-        public async Task<ActionResult<bool>> IssueCertification([FromRoute] int id)
+        public async Task<ActionResult<bool>> IssueCertification(int id)
         {
             var isCertified = await _repository.IssueCertification(id);
             if (!isCertified) return BadRequest("Korisnik nije pronadjen.");

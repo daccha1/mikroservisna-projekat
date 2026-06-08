@@ -54,5 +54,27 @@ namespace CertificationService.Services
 			await db.SaveChangesAsync();
 
 		}
+
+		public async Task<CertificationFailed> HandleEmailFailed(CertificationCompleted evt)
+		{
+			CertificationFailed failMsg = new()
+			{
+				CorrelationId = evt.CorrelationId,
+				CreatedAt = DateTime.UtcNow,
+				FailType = FailType.EmailFail
+			};
+			return failMsg;
+		}
+
+		public async Task<CertificationFailed> HandleCertificationServiceFail(CertificationRequested evt)
+		{
+			CertificationFailed failMsg = new()
+			{
+				CorrelationId = evt.CorrelationId,
+				CreatedAt = DateTime.UtcNow,
+				FailType = FailType.CertificationServiceFail
+			};
+			return failMsg;
+		}
 	}
 }

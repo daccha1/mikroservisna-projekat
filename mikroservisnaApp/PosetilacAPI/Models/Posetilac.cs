@@ -7,7 +7,8 @@ namespace PosetilacAPI.Models
     {
         None,
 		InProgress,
-		Certified
+		Certified,
+        Cancelled
     }
 
     [Table("Posetilac")]

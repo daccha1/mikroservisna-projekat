@@ -26,7 +26,7 @@ namespace CertificationService.Services.RabbitMQ
 		private IConnection _connection;
 		private CertificationService certificationService;
 
-		public async Task StartClient()
+		public MQClient()
 		{
 			certificationService = new();
 
@@ -36,8 +36,13 @@ namespace CertificationService.Services.RabbitMQ
 				UserName = "guest",
 				Password = "guest"
 			};
-			_connection = await factory.CreateConnectionAsync();
-			_channel = await _connection.CreateChannelAsync();
+			_connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
+			_channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();
+		}
+
+		public async Task StartClient()
+		{
+			
 
 			await _channel.ExchangeDeclareAsync(
 				exchange: choreographyExchange,
@@ -60,6 +65,7 @@ namespace CertificationService.Services.RabbitMQ
 			);
 
 			// certification created queue
+
 			await _channel.QueueDeclareAsync(
 				queue: certificationCreatedQueue,
 				durable: false,
@@ -71,6 +77,36 @@ namespace CertificationService.Services.RabbitMQ
 				queue: certificationCreatedQueue,
 				exchange: choreographyExchange,
 				routingKey: certificationCreatedRouting
+			);
+
+			// certification email fail
+			await _channel.QueueDeclareAsync(
+				queue: certificationEmailFailQueue,
+				durable: false,
+				exclusive: false,
+				autoDelete: false
+			);
+
+			await _channel.QueueBindAsync(
+				queue: certificationEmailFailQueue,
+				exchange: choreographyExchange,
+				routingKey: certificationEmailFailRouting
+			);
+
+
+
+			// certification failed queue
+			await _channel.QueueDeclareAsync(
+				queue: certificationFinalFailQueue,
+				durable: false,
+				exclusive: false,
+				autoDelete: false
+			);
+
+			await _channel.QueueBindAsync(
+				queue: certificationFinalFailQueue,
+				exchange: choreographyExchange,
+				routingKey: certificationFinalFailRouting
 			);
 
 			var certificationRequestConsumer = new AsyncEventingBasicConsumer(_channel);
@@ -87,7 +123,8 @@ namespace CertificationService.Services.RabbitMQ
 				}
 				else
 				{
-				
+					var msg = await certificationService.HandleCertificationServiceFail(evt);
+					await SendMessage("final-fail-certification", JsonSerializer.Serialize<CertificationFailed>(msg));
 				}
 
 				await _channel.BasicAckAsync(
@@ -100,6 +137,33 @@ namespace CertificationService.Services.RabbitMQ
 					queue: certificationRequestQueue,
 					autoAck: false,
 					consumer: certificationRequestConsumer
+				);
+
+			// 
+			var certificationFailConsumer = new AsyncEventingBasicConsumer(_channel);
+
+			certificationFailConsumer.ReceivedAsync += async (_, ea) =>
+			{
+				var body = Encoding.UTF8.GetString(ea.Body.Span);
+				var evt = JsonSerializer.Deserialize<CertificationCompleted>(body);
+				
+				if(evt.State == CertificationState.Cancelled)
+				{		
+					var msg = await certificationService.HandleEmailFailed(evt);
+
+					await SendMessage(certificationFinalFailRouting, JsonSerializer.Serialize<CertificationFailed>(msg));
+				}
+				
+				await _channel.BasicAckAsync(
+							deliveryTag: ea.DeliveryTag,
+							multiple: false
+						);
+			};
+
+			await _channel.BasicConsumeAsync(
+					queue: certificationEmailFailQueue,
+					autoAck: false,
+					consumer: certificationFailConsumer
 				);
 		}
 
@@ -129,6 +193,12 @@ namespace CertificationService.Services.RabbitMQ
 
 		public string certificationCreatedQueue = "events.certifications.certification-created";
 		public string certificationCreatedRouting = "certification-created";
+
+		public string certificationEmailFailQueue = "events.email.certification-email-fail";
+		public string certificationEmailFailRouting = "certification-email-fail";
+
+		public string certificationFinalFailQueue = "events.certification.certification-final-fail";
+		public string certificationFinalFailRouting = "final-fail-certification";
 
 	}
 }

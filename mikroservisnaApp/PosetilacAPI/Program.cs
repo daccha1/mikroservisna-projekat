@@ -17,6 +17,7 @@ namespace PosetilacAPI
             builder.Services.AddSingleton<IMQClient, MQClient>();
             builder.Services.AddHostedService<MQInitializer>();
             builder.Services.AddHostedService<OutboxBackgroundService>();
+            builder.Services.AddHostedService<CertificationOutboxBackgroundService>();
 
             builder.Services.AddScoped<IPosetilac, PosetilacSQLRepository>();
             builder.Services.AddControllers();

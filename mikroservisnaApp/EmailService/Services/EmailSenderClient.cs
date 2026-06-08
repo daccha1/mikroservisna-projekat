@@ -41,7 +41,7 @@ namespace EmailService.Services
 
 		public async Task SendMessage(CertificationCreated notification)
 		{
-
+			//throw new Exception(">>> Namerni ex.");
 			if (resendClient == null)
 			{
 				Console.WriteLine("Resend client is not initialized.");
@@ -51,17 +51,15 @@ namespace EmailService.Services
 			var response = await resendClient.EmailSendAsync(new EmailMessage
 			{
 				From = "david@dachadev.xyz",
-				To = [$"{"nijedavid@gmail.com"}"],
+				To = [$"nijedavid@gmail.com", "ilijazeljkovic1312@gmail.com"],
 				Subject = "Cestitamo!",
-				HtmlBody = $"<p> Uspešno ste osvojili sertifikat za posecenost dogadjaju!  <strong> ID Sertifikata: {notification.CorrelationId} </strong>!</p>",
+				HtmlBody = $"<p> Uspešno ste dobili sertifikat za posecenost dogadjaju!  <strong> ID Sertifikata: {notification.CorrelationId} </strong>!</p>",
 			});
-
 		}
-
 
 		public async Task SendMessage(NotifyPosetilac notification)
 		{
-			throw new Exception(">>> Namerni ex."); 
+			//throw new Exception(">>> Namerni ex."); 
 
 			if (resendClient == null)
 			{
