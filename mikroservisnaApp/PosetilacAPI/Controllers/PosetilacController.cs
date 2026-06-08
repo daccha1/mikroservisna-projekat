@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using mikroservisnaApp.Models.DTO.PosetilacDTO;
 using PosetilacAPI.Contracts;
+using RabbitMQ.Client;
 
 namespace PosetilacAPI.Controllers
 {
@@ -48,7 +49,13 @@ namespace PosetilacAPI.Controllers
             return Ok(isAdded);
         }
 
-        // implementiraj getByCorrelationId
+        [HttpPost("certify/{id}")]
+        public async Task<ActionResult<bool>> IssueCertification([FromRoute] int id)
+        {
+            var isCertified = await _repository.IssueCertification(id);
+            if (!isCertified) return BadRequest("Korisnik nije pronadjen.");
+            return Ok(true);
+        }
 
         [HttpPut("update/{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] PosetilacRequestDTO posetilacToUpdate)

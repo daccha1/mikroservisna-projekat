@@ -2,6 +2,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PosetilacAPI.Models
 {
+
+    public enum Certification
+    {
+        None,
+		InProgress,
+		Certified
+    }
+
     [Table("Posetilac")]
     public class Posetilac
     {
@@ -12,6 +20,7 @@ namespace PosetilacAPI.Models
         public string StatusZaposlenja { get; set; }
         public string Interesovanje { get; set; }
         public int DogadjajId { get; set; }
+        public Certification Certificate { get; set; } = Certification.None;
 
     }
 }

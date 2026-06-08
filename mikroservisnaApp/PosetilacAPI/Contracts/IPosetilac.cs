@@ -6,7 +6,8 @@ namespace PosetilacAPI.Contracts
     {
         public Task<List<PosetilacResponseDTO>> GetAll();
         public Task<PosetilacResponseDTO> GetById(int idPosetilac);
-        public Task<PosetilacRequestDTO> Post(PosetilacRequestDTO posetilac);
+		public Task<bool> IssueCertification(int id);
+		public Task<PosetilacRequestDTO> Post(PosetilacRequestDTO posetilac);
         public Task<bool> Update(int idPosetilac, PosetilacRequestDTO updatedPosetilac);
     }
 }

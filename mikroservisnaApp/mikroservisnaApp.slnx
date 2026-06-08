@@ -12,6 +12,7 @@
   <Folder Name="/CQRS Container/StrucniDogadjaj/Repositories/">
     <Project Path="ContractsCQRS/ContractsCQRS.csproj" Id="95e5921a-2966-40fe-9409-42f825d60105" />
   </Folder>
+  <Project Path="CertificationService/CertificationService.csproj" Id="08c938ee-5b5e-4756-a38d-06c4b61c55e4" />
   <Project Path="Common/Common.csproj" Id="0d0df27f-ef2d-46f9-a11d-9c0dfa74d06a" />
   <Project Path="EmailService/EmailService.csproj" Id="95ff323b-6f05-4df1-b8f6-b38fad5bc4c8" />
   <Project Path="EventActivityService/EventActivityService.csproj" />

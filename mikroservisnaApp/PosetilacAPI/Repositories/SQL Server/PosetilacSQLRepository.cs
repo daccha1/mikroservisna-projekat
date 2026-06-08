@@ -53,7 +53,27 @@ namespace PosetilacAPI.Repositories
             return posetilac;
         }
 
-        public async Task<PosetilacRequestDTO> Post(PosetilacRequestDTO posetilac)
+		public async Task<bool> IssueCertification(int id)
+        {
+            var visitor = await context.Posetioci.Where(v => v.Id == id).FirstOrDefaultAsync();
+            if (visitor == null) return false;
+
+            visitor.Certificate = Certification.InProgress;
+
+            CertificationRequestOutboxMessage msg = new()
+            {
+                CorrelationId = visitor.CorrelationId,
+            };
+
+            context.Posetioci.Update(visitor);
+
+            await context.CertificationRequests.AddAsync(msg);
+            await context.SaveChangesAsync();
+
+            return true;
+		}
+
+		public async Task<PosetilacRequestDTO> Post(PosetilacRequestDTO posetilac)
         {
             Posetilac noviPosetilac = new()
             {

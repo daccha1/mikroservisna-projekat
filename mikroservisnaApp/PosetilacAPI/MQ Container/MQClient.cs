@@ -1,4 +1,5 @@
 ﻿	using Common.Saga_Contracts;
+using Common.Saga_Contracts.Choreography;
 using Microsoft.EntityFrameworkCore;
 using PosetilacAPI.Data;
 using PosetilacAPI.Models;
@@ -16,6 +17,7 @@ using System.Text;
 		{
 			public Task EnsureStarted();
 			public Task SendMessage(PosetilacCreated evt);
+			public Task SendMessage(CertificationRequested evt);
 		}
 
 		public class MQClient : IMQClient
@@ -31,6 +33,12 @@ using System.Text;
 
 			public string posetilacServiceConsumeQueue = "events.posetilac.transaction-consume-queue";
 			public string posetilacServiceConsumeRouting = "transaction-final-feedback";
+
+
+			public string choreographyExchange = "choreography-exchange";
+
+			public string certificationRequestQueue = "events.posetilac.certification-requested";
+			public string certificationRequestRouting = "certification-requested";
 
 			private IServiceScopeFactory _scopeFactory;
 			public MQClient(IServiceScopeFactory scopeFactory)
@@ -112,7 +120,28 @@ using System.Text;
 						routingKey: posetilacServiceConsumeRouting
 					);
 
-				var consumer = new AsyncEventingBasicConsumer(channel);
+				// --- SAGA CHOREOGRAPHY ---
+				await channel.ExchangeDeclareAsync(
+					exchange: choreographyExchange,
+					type: ExchangeType.Direct,
+					durable: false,
+					autoDelete: false
+				);
+
+				await channel.QueueDeclareAsync(
+					queue: certificationRequestQueue,
+					durable: false,
+					exclusive: false,
+					autoDelete: false
+				);
+
+				await channel.QueueBindAsync(
+					queue: certificationRequestQueue,
+					exchange: choreographyExchange,
+					routingKey: certificationRequestRouting
+				);
+
+			var consumer = new AsyncEventingBasicConsumer(channel);
 
 				consumer.ReceivedAsync += async (_, ea) =>
 				{
@@ -155,6 +184,23 @@ using System.Text;
 				
 			}
 
+			public async Task SendMessage(CertificationRequested evt)
+			{
+				string jsonString = JsonSerializer.Serialize<CertificationRequested>(evt);
+				byte[] byteBody = Encoding.UTF8.GetBytes(jsonString);
 
+				var basicProps = new BasicProperties
+				{
+					Persistent = true
+				};
+
+				await channel.BasicPublishAsync(
+						exchange: choreographyExchange,
+						routingKey: certificationRequestRouting,
+						basicProperties: basicProps,
+						body: byteBody,
+						mandatory: true
+				);
+			}
 		}
 	}
