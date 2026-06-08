@@ -1,5 +1,6 @@
 ﻿using Azure.Core.GeoJson;
 using Common.Saga_Contracts;
+using Common.Saga_Contracts.Choreography;
 using Common.StrucniDogadjajDTO;
 using EmailService.Models;
 using Microsoft.Extensions.Configuration;
@@ -37,6 +38,26 @@ namespace EmailService.Services
 			resendClient = ResendClient.Create(apiKey);
 			
 		}
+
+		public async Task SendMessage(CertificationCreated notification)
+		{
+
+			if (resendClient == null)
+			{
+				Console.WriteLine("Resend client is not initialized.");
+				return;
+			}
+
+			var response = await resendClient.EmailSendAsync(new EmailMessage
+			{
+				From = "david@dachadev.xyz",
+				To = [$"{"nijedavid@gmail.com"}"],
+				Subject = "Cestitamo!",
+				HtmlBody = $"<p> Uspešno ste osvojili sertifikat za posecenost dogadjaju!  <strong> ID Sertifikata: {notification.CorrelationId} </strong>!</p>",
+			});
+
+		}
+
 
 		public async Task SendMessage(NotifyPosetilac notification)
 		{

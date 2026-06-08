@@ -39,6 +39,12 @@ namespace EmailService.Services
 		public string orchConsumeQueue = "events.orch.consume-queue";
 		public string orchConsumeRouting = "notification-sent";
 
+		// SAGA - Orchestration
+		public string choreographyExchange = "choreography-exchange";
+
+		public string certificationCreatedQueue = "events.certifications.certification-created";
+		public string certificationCreatedRouting = "certification-created";
+
 		private IServiceScopeFactory _scopeFactory;
 		
 		public MQConsumer(IServiceScopeFactory scopeFactory)
@@ -132,6 +138,26 @@ namespace EmailService.Services
 							routingKey: orchConsumeRouting
 						);
 
+					// Saga - Choreography
+					await channel.ExchangeDeclareAsync(
+							exchange: choreographyExchange,
+							type: ExchangeType.Direct,
+							durable: false,
+							autoDelete: false
+						);
+
+					await channel.QueueDeclareAsync(
+							queue: certificationCreatedQueue,
+							durable: false,
+							exclusive: false,
+							autoDelete: false
+						);
+					await channel.QueueBindAsync(
+							queue: certificationCreatedQueue,
+							exchange: choreographyExchange,
+							routingKey: certificationCreatedRouting
+						);
+
 
 					// CONSUMER KOJI OSLUSKUJE KREIRANJE NOVOG EVENTA (event <=> strucni dogadjaj)
 					var consumerEventCreated = new AsyncEventingBasicConsumer(channel);
@@ -154,6 +180,16 @@ namespace EmailService.Services
 					};
 					await channel.BasicConsumeAsync(emailServiceQueue, autoAck: false, consumerPosetilacNotification);
 
+					var consumerCertificationCreated = new AsyncEventingBasicConsumer(channel);
+					consumerCertificationCreated.ReceivedAsync += async (_, ea) =>
+					{
+						try
+						{
+							await HandleCreatedCertification(ea, stoppingToken);
+						}
+						catch (Exception) { }
+					};
+					await channel.BasicConsumeAsync(certificationCreatedQueue, autoAck: false, consumerCertificationCreated);
 
 					Console.WriteLine("Consumer is listening...");
 					await Task.Delay(Timeout.Infinite, stoppingToken);
@@ -170,7 +206,11 @@ namespace EmailService.Services
 			}
 		}
 
-		
+		private async Task HandleCreatedCertification(BasicDeliverEventArgs ea, CancellationToken stoppingToken)
+		{
+			var body = Encoding.UTF8.GetString(ea.Body.Span);
+		}
+
 		private async Task HandlePosetilacNotification(BasicDeliverEventArgs ea, CancellationToken stoppingToken)
 		{
 			using var scope = _scopeFactory.CreateScope();

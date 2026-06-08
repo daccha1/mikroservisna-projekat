@@ -1,5 +1,6 @@
 ﻿using CertificationService.Data;
 using CertificationService.Models;
+using Common;
 using Common.Saga_Contracts.Choreography;
 using System;
 using System.Collections.Generic;
@@ -42,8 +43,15 @@ namespace CertificationService.Services
 		{
 			CertificationDbContext db = new();
 
+			CertificationCreatedOutboxMessage msg = new()
+			{
+				CorrelationId = correlationId,
+				CreatedAt = DateTime.UtcNow,
+				Status = Status.NotProcessed
+			};
 
-			db.DisposeAsync();
+			await db.CertificationsOutboxTable.AddAsync(msg);
+			await db.SaveChangesAsync();
 
 		}
 	}

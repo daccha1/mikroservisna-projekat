@@ -59,24 +59,35 @@ namespace CertificationService.Services.RabbitMQ
 				routingKey: certificationRequestRouting
 			);
 
+			// certification created queue
+			await _channel.QueueDeclareAsync(
+				queue: certificationCreatedQueue,
+				durable: false,
+				exclusive: false,
+				autoDelete: false
+			);
+
+			await _channel.QueueBindAsync(
+				queue: certificationCreatedQueue,
+				exchange: choreographyExchange,
+				routingKey: certificationCreatedRouting
+			);
+
 			var certificationRequestConsumer = new AsyncEventingBasicConsumer(_channel);
 
 			certificationRequestConsumer.ReceivedAsync += async (_, ea) =>
 			{
 				var body = Encoding.UTF8.GetString(ea.Body.Span);
 				var evt = JsonSerializer.Deserialize<CertificationRequested>(body);
-
 				int result = await certificationService.HandleCertificationRequest(evt);
 
 				if(result == 1)
 				{
-
 					await certificationService.HandleCreatedCertificate(evt.CorrelationId);
-					
 				}
 				else
 				{
-					// kompenzacija i vrati nazad poruku
+				
 				}
 
 				await _channel.BasicAckAsync(
@@ -115,5 +126,9 @@ namespace CertificationService.Services.RabbitMQ
 
 		public string certificationRequestQueue = "events.posetilac.certification-requested";
 		public string certificationRequestRouting = "certification-requested";
+
+		public string certificationCreatedQueue = "events.certifications.certification-created";
+		public string certificationCreatedRouting = "certification-created";
+
 	}
 }
