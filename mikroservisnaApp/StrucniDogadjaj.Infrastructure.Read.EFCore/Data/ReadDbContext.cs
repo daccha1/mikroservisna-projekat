@@ -24,8 +24,17 @@ namespace StrucniDogadjaj.Infrastructure.Read.EFCore.Data
 						.ToTable("Dogadjaj", t => t.ExcludeFromMigrations());
 		}
 		
-
 		public DbSet<StrucniDogadjaj.Domain.Read.StrucniDogadjaj> Dogadjaji { get; set; }
+
+		public override int SaveChanges()
+		{
+			throw new InvalidOperationException("Nije dozvoljeno menjati stanje sistema kroz ReadDbContext (Query operacije).");
+		}
+
+		public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+		{
+			throw new InvalidOperationException("Nije dozvoljeno menjati stanje sistema kroz ReadDbContext (Query operacije).");
+		}
 
 	}
 }

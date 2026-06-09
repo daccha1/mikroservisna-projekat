@@ -14,7 +14,6 @@ namespace EventActivityService.Models.Domain_models
 			Version++;
 			_unsavedEvents.Add(@event);
 		}
-
 		public abstract void Apply(EventEntity evt);
 		public abstract void ApplySnapshot(AggregateSnapshot snapshot);
 		public IReadOnlyList<EventEntity> DequeueUnsavedEvents()
@@ -23,7 +22,6 @@ namespace EventActivityService.Models.Domain_models
 			_unsavedEvents.Clear();
 			return events;
 		}
-
 		public void LoadEvents(List<EventEntity> events)
 		{
 			foreach(var evt in events)

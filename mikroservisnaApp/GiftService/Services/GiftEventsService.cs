@@ -26,8 +26,6 @@ namespace GiftService.Services
 
 		public async Task HandleGiftCreation(PosetilacCreated posetilac)
 		{
-			// kreiramo gift
-			// to se prosledjuje repository-ju
 
 			GiftType prirucnikTip;
 

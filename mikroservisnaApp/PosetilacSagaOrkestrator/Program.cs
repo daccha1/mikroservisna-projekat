@@ -16,8 +16,8 @@ namespace PosetilacSagaOrkestrator
 			_ = Task.Run(() => MessageDispatcher.DispatchGiftPosetilacCompensation());
 
 			Console.WriteLine("Pokrenuta SAGA konzola.");
-			using var mqClient = new MQClient();
 			
+			using var mqClient = new MQClient();
 			await mqClient.StartClient();
 			
 			await mqClient.Subscribe<PosetilacCreated>("events.orch.pos-creation", async (e) => {

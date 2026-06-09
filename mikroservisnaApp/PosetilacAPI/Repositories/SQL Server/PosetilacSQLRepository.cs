@@ -93,11 +93,7 @@ namespace PosetilacAPI.Repositories
                 Interesovanje = noviPosetilac.Interesovanje
             };
 
-            await _mqClient.SendMessage(posetilacCreatedEvent);
-
-			// publishujemo poruku --> ...saga...
-			//                     <-- response
-			// ^ pokrenemo save u contextu za posetioca        
+            await _mqClient.SendMessage(posetilacCreatedEvent);     
 
 			context.Posetioci.Add(noviPosetilac);
 			int isAdded = await context.SaveChangesAsync();

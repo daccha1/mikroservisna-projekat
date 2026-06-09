@@ -16,15 +16,7 @@ namespace PosetilacSagaOrkestrator.Services.MQ_Container
 		{
 			while (true)
 			{
-				// uzmi outbox poruku
-				// proveri da li postoji saga za taj correlation ID 
-				// ako ne postoji saga -> preskoci
-
-				// uzmemo sagu na osnovu correlation-a
-				// publish poruke na odgovarajuci queue
-				// azuriramo state sage, azuriramo state outbox poruke, save changes
-
-				var sagaDb = new PosetilacOrkestratorDbContext();
+				var sagaDb = new PosetilacOrkestratorDbContext();									//					testiraj bez ove gluposti?
 				var outboxMsg = sagaDb.GiftsOutboxMessages.Where(msg => msg.Status == GiftOutboxStatus.ForProcessing || msg.Status == (GiftOutboxStatus)0).FirstOrDefault();
 
 				if (outboxMsg == null)

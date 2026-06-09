@@ -123,6 +123,7 @@ namespace CertificationService.Services.RabbitMQ
 				}
 				else
 				{
+					// <<< PROVERI >>>
 					var msg = await certificationService.HandleCertificationServiceFail(evt);
 					await SendMessage("final-fail-certification", JsonSerializer.Serialize<CertificationFailed>(msg));
 				}
@@ -196,7 +197,7 @@ namespace CertificationService.Services.RabbitMQ
 
 		public string certificationEmailFailQueue = "events.email.certification-email-fail";
 		public string certificationEmailFailRouting = "certification-email-fail";
-
+		
 		public string certificationFinalFailQueue = "events.certification.certification-final-fail";
 		public string certificationFinalFailRouting = "final-fail-certification";
 

@@ -19,6 +19,7 @@ using StrucniDogadjaj.Infrastructure.Write.EFCore.Data;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
 namespace mikroservisnaApp.Controllers
@@ -94,7 +95,8 @@ namespace mikroservisnaApp.Controllers
 		{
 
 			int idDogadjaja = await _addDogadjajHandler.Handle(dogadjaj);
-
+			// mora da se prebaci u adekvatan objekat da bi se poslalo na queue
+			//await _mqPublisher.SendMessageAsync(jsonBody, "events.event.eventsExchange", "event-publish-key");
 			return Ok(idDogadjaja);
 
 			//var newEvent = await _repository.Post(addEvent);
@@ -103,7 +105,7 @@ namespace mikroservisnaApp.Controllers
 			//	return NotFound("Nije uspelo dodavanje dogadjaja.");
 			//}
 			////string jsonBody = JsonSerializer.Serialize<StrucniDogadjajRequestDTO>(addEvent);
-			////await _mqPublisher.SendMessageAsync(jsonBody, "events.event.eventsExchange", "event-publish-key");
+			////
 			//return Ok(newEvent);
 		}
 
